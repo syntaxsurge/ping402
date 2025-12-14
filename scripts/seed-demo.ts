@@ -70,7 +70,6 @@ async function main() {
   });
 
   if ((stats?.totalMessages ?? 0) > 0) {
-    // eslint-disable-next-line no-console
     console.log("Demo seed skipped: inbox already has messages.");
     return;
   }
@@ -120,9 +119,7 @@ async function main() {
     });
   }
 
-  // eslint-disable-next-line no-console
   console.log("Seeded demo messages.");
-  // eslint-disable-next-line no-console
   console.log(
     "Public URL:",
     `http://localhost:3000/u/${encodeURIComponent(env.PING402_OWNER_HANDLE)}`
@@ -130,7 +127,6 @@ async function main() {
 }
 
 main().catch((err) => {
-  // eslint-disable-next-line no-console
   console.error(err);
   process.exit(1);
 });

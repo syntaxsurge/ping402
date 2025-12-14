@@ -347,9 +347,17 @@ Select **one** backend stack (Drizzle+Supabase or Convex) per project by default
 - Install: `pnpm install`
 - Dev (Next.js): `pnpm dev`
 - Dev (Convex): `pnpm convex:dev`
+- Convex codegen: `pnpm convex:codegen`
+- Convex deploy: `pnpm convex:deploy`
+- Convex redeploy: `pnpm convex:redeploy`
+- Convex reset: `pnpm convex:reset`
 - Seed owner profile: `pnpm seed:owner`
 - Seed demo messages: `pnpm seed:demo`
 - Lint: `pnpm lint`
+- Lint (fix): `pnpm lint:fix`
+- Lint all: `pnpm lint:all`
+- Format: `pnpm format`
+- Format (code): `pnpm format:code`
 - Typecheck: `pnpm typecheck`
 - Production build: `pnpm build`
 

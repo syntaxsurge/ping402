@@ -39,9 +39,7 @@ async function main() {
     bio: env.PING402_OWNER_BIO,
   });
 
-  // eslint-disable-next-line no-console
   console.log("Seeded/updated owner profile:", id);
-  // eslint-disable-next-line no-console
   console.log(
     "Public URL:",
     `http://localhost:3000/u/${encodeURIComponent(env.PING402_OWNER_HANDLE)}`
@@ -49,7 +47,6 @@ async function main() {
 }
 
 main().catch((err) => {
-  // eslint-disable-next-line no-console
   console.error(err);
   process.exit(1);
 });
