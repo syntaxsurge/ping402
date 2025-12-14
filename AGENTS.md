@@ -1,4 +1,4 @@
-After you finish every task, I want you to give me one line or one sentence GitHub commit message so that I can manually commit all of the changes that you've done using the commit message in just one line or one sentence.
+After you finish each task, please provide a one-line GitHub commit message that I can use to manually commit the changes you made. Keep the message focused only on your changes from my latest prompt and your response, since I’ll be working on this repository with multiple AI agents. When creating the commit message, don’t rely on git diff or porcelain commands; instead, rely on my latest prompt and your latest response to create the best commit message.
 
 # Agent Playbook (Living Document)
 
@@ -20,7 +20,7 @@ This file is the authoritative reference for platform architecture and agent exp
 
 4. **Be minimal and accessible.** All new pages and components should follow the modern, minimal UI style—clean, responsive, and accessible (ARIA labels, focus states, keyboard navigation, color contrast). Avoid over‑engineering or speculative flexibility.
 
-5. **Type‑sound and consistent.** Run `pnpm typecheck` before merging. Maintain consistent naming, small API surfaces, and clear defaults. Remove unused files and ensure new or extended helpers live in canonical locations to encourage immediate reuse. Also run `pnpm build` after all changes you made and fix all errors before finalizing everything.
+5. **Type‑sound and consistent.** Run `pnpm typecheck` before merging. Maintain consistent naming, small API surfaces, and clear defaults. Remove unused files and ensure new or extended helpers live in canonical locations to encourage immediate reuse.
 
 ### Examples
 
