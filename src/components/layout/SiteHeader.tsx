@@ -1,3 +1,4 @@
+import Image from "next/image";
 import Link from "next/link";
 import { Menu } from "lucide-react";
 
@@ -22,18 +23,15 @@ export function SiteHeader() {
     <header className="sticky top-0 z-50 border-b bg-background/70 backdrop-blur supports-[backdrop-filter]:bg-background/50">
       <div className="mx-auto flex h-16 w-full max-w-6xl items-center justify-between px-4">
         <Link href="/" className="flex items-center gap-2 font-semibold tracking-tight">
-          <span className="relative grid h-8 w-8 place-items-center overflow-hidden rounded-lg border bg-muted">
-            <span
-              className="absolute inset-0"
-              style={{
-                background:
-                  "linear-gradient(135deg, rgb(var(--brand-purple)), rgb(var(--brand-green)))",
-              }}
-              aria-hidden="true"
+          <span className="relative h-8 w-8 overflow-hidden rounded-lg border bg-muted sm:h-9 sm:w-9">
+            <Image
+              src="/images/ping402-logo.png"
+              alt="ping402 logo"
+              fill
+              sizes="(max-width: 640px) 32px, 36px"
+              className="object-contain p-1"
+              priority
             />
-            <span className="relative text-[11px] font-semibold text-slate-950">
-              402
-            </span>
           </span>
           <span>ping402</span>
         </Link>

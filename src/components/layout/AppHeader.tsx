@@ -1,3 +1,4 @@
+import Image from "next/image";
 import Link from "next/link";
 import { Menu } from "lucide-react";
 
@@ -35,18 +36,15 @@ export function AppHeader({
           href="/dashboard"
           className="flex items-center gap-2 font-semibold tracking-tight"
         >
-          <span className="relative grid h-8 w-8 place-items-center overflow-hidden rounded-lg border bg-muted">
-            <span
-              className="absolute inset-0"
-              style={{
-                background:
-                  "linear-gradient(135deg, rgb(var(--brand-purple)), rgb(var(--brand-green)))",
-              }}
-              aria-hidden="true"
+          <span className="relative h-8 w-8 overflow-hidden rounded-lg border bg-muted sm:h-9 sm:w-9">
+            <Image
+              src="/images/ping402-logo.png"
+              alt="ping402 logo"
+              fill
+              sizes="(max-width: 640px) 32px, 36px"
+              className="object-contain p-1"
+              priority
             />
-            <span className="relative text-[11px] font-semibold text-slate-950">
-              402
-            </span>
           </span>
           <span>ping402</span>
           <Badge variant="outline" className="hidden sm:inline-flex">
@@ -127,4 +125,3 @@ export function AppHeader({
     </header>
   );
 }
-
