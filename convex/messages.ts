@@ -6,7 +6,13 @@ import { rateLimiter } from "./lib/rateLimiter";
 import { enforcePingPolicy } from "./lib/messagePolicy";
 
 const Tier = v.union(v.literal("standard"), v.literal("priority"), v.literal("vip"));
-const MessageStatus = v.union(v.literal("new"), v.literal("replied"), v.literal("archived"));
+const MessageStatus = v.union(
+  v.literal("pending"),
+  v.literal("new"),
+  v.literal("replied"),
+  v.literal("archived"),
+);
+const InboxStatus = v.union(v.literal("new"), v.literal("replied"), v.literal("archived"));
 
 function priceCentsForTier(tier: "standard" | "priority" | "vip"): number {
   switch (tier) {
@@ -27,11 +33,13 @@ export const createPaidForHandle = mutation({
     senderName: v.optional(v.string()),
     senderContact: v.optional(v.string()),
     payer: v.string(),
-    paymentTxSig: v.string(),
-    xPaymentB64: v.string(),
-    x402Network: v.optional(v.string()),
-    x402Scheme: v.optional(v.string()),
-    x402Version: v.optional(v.number()),
+    paymentSignatureB64: v.string(),
+    x402Network: v.string(),
+    x402Scheme: v.string(),
+    x402Version: v.number(),
+    x402Asset: v.string(),
+    x402Amount: v.string(),
+    x402PayTo: v.string(),
   },
   handler: async (ctx, args) => {
     const toHandle = normalizeHandle(args.toHandle);
@@ -48,7 +56,9 @@ export const createPaidForHandle = mutation({
 
     const existing = await ctx.db
       .query("messages")
-      .withIndex("by_paymentTxSig", (q) => q.eq("paymentTxSig", args.paymentTxSig))
+      .withIndex("by_paymentSignatureB64", (q) =>
+        q.eq("paymentSignatureB64", args.paymentSignatureB64),
+      )
       .unique();
 
     if (existing) {
@@ -99,49 +109,103 @@ export const createPaidForHandle = mutation({
       senderName,
       senderContact,
       payer: args.payer,
-      paymentTxSig: args.paymentTxSig,
-      xPaymentB64: args.xPaymentB64,
+      paymentSignatureB64: args.paymentSignatureB64,
       x402Network: args.x402Network,
       x402Scheme: args.x402Scheme,
       x402Version: args.x402Version,
+      x402Asset: args.x402Asset,
+      x402Amount: args.x402Amount,
+      x402PayTo: args.x402PayTo,
       priceCents,
-      status: "new",
+      status: "pending",
       createdAt: now,
       updatedAt: now,
     });
+
+    return { messageId, deduped: false };
+  },
+});
+
+export const markPaidForHandleSettled = mutation({
+  args: {
+    handle: v.string(),
+    messageId: v.id("messages"),
+    paymentTxSig: v.string(),
+  },
+  handler: async (ctx, args) => {
+    const handle = normalizeHandle(args.handle);
+    assertValidHandle(handle);
+
+    const profile = await ctx.db
+      .query("profiles")
+      .withIndex("by_handle", (q) => q.eq("handle", handle))
+      .unique();
+
+    if (!profile) {
+      throw new ConvexError("Recipient not found.");
+    }
+
+    const message = await ctx.db.get(args.messageId);
+    if (!message) {
+      throw new ConvexError("Message not found.");
+    }
+    if (message.toProfileId !== profile._id) {
+      throw new ConvexError("Message not found.");
+    }
+
+    if (message.paymentTxSig) {
+      return { updated: false };
+    }
+
+    const now = Date.now();
+    const shouldUpdateStats = message.status === "pending";
+    const nextStatus = shouldUpdateStats ? "new" : message.status;
+
+    await ctx.db.patch(message._id, {
+      paymentTxSig: args.paymentTxSig,
+      status: nextStatus,
+      updatedAt: now,
+    });
+
+    if (!shouldUpdateStats) {
+      return { updated: true };
+    }
 
     const stats = await ctx.db
       .query("inboxStats")
       .withIndex("by_profile", (q) => q.eq("toProfileId", profile._id))
       .unique();
 
+    const inc = (n: number) => n + 1;
+
     if (!stats) {
       await ctx.db.insert("inboxStats", {
         toProfileId: profile._id,
         totalMessages: 1,
-        totalRevenueCents: priceCents,
+        totalRevenueCents: message.priceCents,
         newCount: 1,
         repliedCount: 0,
         archivedCount: 0,
         updatedAt: now,
       });
-    } else {
-      await ctx.db.patch(stats._id, {
-        totalMessages: stats.totalMessages + 1,
-        totalRevenueCents: stats.totalRevenueCents + priceCents,
-        newCount: stats.newCount + 1,
-        updatedAt: now,
-      });
+      return { updated: true };
     }
 
-    return { messageId, deduped: false };
+    await ctx.db.patch(stats._id, {
+      totalMessages: stats.totalMessages + 1,
+      totalRevenueCents: stats.totalRevenueCents + message.priceCents,
+      newCount: inc(stats.newCount),
+      updatedAt: now,
+    });
+
+    return { updated: true };
   },
 });
 
 export const listForHandleByStatus = query({
   args: {
     handle: v.string(),
-    status: MessageStatus,
+    status: InboxStatus,
     cursor: v.union(v.null(), v.string()),
     numItems: v.number(),
   },
@@ -218,7 +282,7 @@ export const setStatusForHandle = mutation({
   args: {
     handle: v.string(),
     messageId: v.id("messages"),
-    status: MessageStatus,
+    status: InboxStatus,
   },
   handler: async (ctx, args) => {
     const handle = normalizeHandle(args.handle);
@@ -240,6 +304,10 @@ export const setStatusForHandle = mutation({
 
     if (message.toProfileId !== profile._id) {
       throw new ConvexError("Message not found.");
+    }
+
+    if (message.status === "pending") {
+      throw new ConvexError("Message is awaiting payment settlement.");
     }
 
     if (message.status === args.status) return;

@@ -86,8 +86,8 @@ export default function HomePage() {
               <CardTitle className="text-base">3) Pay, then deliver</CardTitle>
               <p className="text-sm text-muted-foreground">
                 The ping endpoint responds with HTTP 402 until it receives an{" "}
-                <code className="rounded bg-muted px-1 py-0.5">X-PAYMENT</code> proof for a
-                Solana transaction.
+                <code className="rounded bg-muted px-1 py-0.5">PAYMENT-SIGNATURE</code> proof
+                for a Solana transaction.
               </p>
             </CardHeader>
           </Card>
@@ -205,7 +205,7 @@ export default function HomePage() {
               x402 is an HTTP-native payment flow: a server can respond with{" "}
               <strong>402 Payment Required</strong> and payment requirements. A client (or UI)
               pays, then retries the request with an{" "}
-              <code className="rounded bg-muted px-1 py-0.5">X-PAYMENT</code> proof.
+              <code className="rounded bg-muted px-1 py-0.5">PAYMENT-SIGNATURE</code> proof.
             </AccordionContent>
           </AccordionItem>
           <AccordionItem value="creator-signin">

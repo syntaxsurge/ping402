@@ -2,7 +2,12 @@ import { defineSchema, defineTable } from "convex/server";
 import { v } from "convex/values";
 
 const Tier = v.union(v.literal("standard"), v.literal("priority"), v.literal("vip"));
-const MessageStatus = v.union(v.literal("new"), v.literal("replied"), v.literal("archived"));
+const MessageStatus = v.union(
+  v.literal("pending"),
+  v.literal("new"),
+  v.literal("replied"),
+  v.literal("archived"),
+);
 
 export default defineSchema({
   profiles: defineTable({
@@ -23,11 +28,14 @@ export default defineSchema({
     senderName: v.optional(v.string()),
     senderContact: v.optional(v.string()),
     payer: v.string(),
-    paymentTxSig: v.string(),
-    xPaymentB64: v.string(),
+    paymentSignatureB64: v.string(),
+    paymentTxSig: v.optional(v.string()),
     x402Network: v.optional(v.string()),
     x402Scheme: v.optional(v.string()),
     x402Version: v.optional(v.number()),
+    x402Asset: v.optional(v.string()),
+    x402Amount: v.optional(v.string()),
+    x402PayTo: v.optional(v.string()),
     priceCents: v.number(),
     status: MessageStatus,
     createdAt: v.number(),
@@ -35,7 +43,7 @@ export default defineSchema({
   })
     .index("by_profile_createdAt", ["toProfileId", "createdAt"])
     .index("by_profile_status_createdAt", ["toProfileId", "status", "createdAt"])
-    .index("by_paymentTxSig", ["paymentTxSig"])
+    .index("by_paymentSignatureB64", ["paymentSignatureB64"])
     .index("by_payer_createdAt", ["payer", "createdAt"]),
 
   inboxStats: defineTable({

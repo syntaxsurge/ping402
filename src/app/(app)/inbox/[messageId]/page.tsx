@@ -23,8 +23,10 @@ function shortAddress(address: string) {
   return `${address.slice(0, 4)}…${address.slice(-4)}`;
 }
 
-function statusBadge(status: "new" | "replied" | "archived") {
+function statusBadge(status: "pending" | "new" | "replied" | "archived") {
   switch (status) {
+    case "pending":
+      return <Badge variant="outline">pending</Badge>;
     case "new":
       return <Badge>new</Badge>;
     case "replied":
@@ -65,10 +67,9 @@ export default async function MessageDetailPage({
     redirect(`/inbox/${encodeURIComponent(messageId)}`);
   }
 
-  const hasReceipt = isSolanaTxSignature(message.paymentTxSig);
-  const explorerUrl = hasReceipt
-    ? solanaExplorerTxUrl(message.paymentTxSig, env.NEXT_PUBLIC_NETWORK)
-    : null;
+  const paymentTxSig = message.paymentTxSig ?? null;
+  const hasReceipt = Boolean(paymentTxSig && isSolanaTxSignature(paymentTxSig));
+  const explorerUrl = hasReceipt ? solanaExplorerTxUrl(paymentTxSig!, env.NEXT_PUBLIC_NETWORK) : null;
 
   return (
     <div className="space-y-8">
@@ -137,7 +138,7 @@ export default async function MessageDetailPage({
                 <span className="text-muted-foreground">No on-chain receipt.</span>
               )}
               <div className="mt-1 font-mono text-xs text-muted-foreground">
-                {message.paymentTxSig}
+                {paymentTxSig ?? "pending"}
               </div>
               {message.x402Network || message.x402Scheme || message.x402Version ? (
                 <div className="mt-2 text-xs text-muted-foreground">
@@ -164,12 +165,12 @@ export default async function MessageDetailPage({
       </Card>
 
       <div className="flex flex-wrap gap-2">
-        {message.status !== "replied" ? (
+        {message.status !== "pending" && message.status !== "replied" ? (
           <form action={setStatus.bind(null, "replied")}>
             <Button type="submit">Mark replied</Button>
           </form>
         ) : null}
-        {message.status !== "archived" ? (
+        {message.status !== "pending" && message.status !== "archived" ? (
           <form action={setStatus.bind(null, "archived")}>
             <Button type="submit" variant="outline">
               Archive

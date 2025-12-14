@@ -29,8 +29,7 @@ Paid inbox pings on Solana using x402 (HTTP 402 Payment Required), with messages
      - `NEXT_PUBLIC_NETWORK` (`solana-devnet` or `solana`)
      - `NEXT_PUBLIC_FACILITATOR_URL`
      - `PING402_CLAIM_PAY_TO_WALLET` (required; receives x402 handle-claim fees)
-     - `NEXT_PUBLIC_CDP_CLIENT_KEY` (optional; enables Coinbase Onramp button in paywall UI)
-     - `CDP_API_KEY_ID` and `CDP_API_KEY_SECRET` (optional; used by `/api/x402/session-token`)
+     - `CDP_API_KEY_ID` and `CDP_API_KEY_SECRET` (required when using the CDP facilitator URL)
      - `PING402_JWT_SECRET` (required; used for the creator HttpOnly session cookie)
 
 4. Start Next.js:

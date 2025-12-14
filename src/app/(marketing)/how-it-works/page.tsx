@@ -45,7 +45,7 @@ export default function HowItWorksPage() {
             </li>
             <li>
               The sender pays on Solana and retries the request with an{" "}
-              <code>X-PAYMENT</code> proof.
+              <code>PAYMENT-SIGNATURE</code> proof.
             </li>
             <li>
               The server verifies/settles payment via the configured facilitator,

@@ -89,7 +89,7 @@ function OwnerSignInInner() {
       toast.error("The wallet that paid did not match the wallet that signed in.");
       return;
     }
-    if (errorCode === "INVALID_X_PAYMENT") {
+    if (errorCode === "INVALID_PAYMENT_SIGNATURE") {
       toast.error("Invalid x402 payment proof. Please try again.");
       return;
     }

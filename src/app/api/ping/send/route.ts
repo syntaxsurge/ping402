@@ -1,15 +1,24 @@
 import { NextRequest, NextResponse } from "next/server";
-import { withX402 } from "x402-next";
-import type { SolanaAddress } from "x402-next";
+import { withX402 } from "@x402/next";
+import { declareDiscoveryExtension } from "@x402/extensions/bazaar";
 import { z } from "zod";
+import type { Id } from "@convex/_generated/dataModel";
 
 import { getEnvServer } from "@/lib/env/env.server";
 import { getProfileByHandle } from "@/lib/db/convex/server";
-import { createPaidMessageForHandle } from "@/lib/db/convex/server";
-import { parseXPaymentHeader } from "@/lib/x402/parseXPayment";
-import { getX402FacilitatorConfig } from "@/lib/x402/facilitator";
+import {
+  createPaidMessageForHandle,
+  markMessagePaidForHandleSettled,
+} from "@/lib/db/convex/server";
+import { getX402PaywallConfig, getX402PaywallProvider } from "@/lib/x402/paywall";
+import {
+  getPaymentSignatureHeader,
+  parsePaymentSignatureHeader,
+  parsePaymentResponseHeader,
+} from "@/lib/x402/parsePayment";
+import { getX402Server } from "@/lib/x402/server";
 import { logger } from "@/lib/observability/logger";
-import { solanaExplorerTxUrl } from "@/lib/solana/explorer";
+import { solanaChainIdForNetwork } from "@/lib/solana/chain";
 import { getPingTierConfig, PingTierSchema, type PingTier } from "@/lib/ping/tiers";
 import { getErrorCode, getErrorData } from "@/lib/utils/errorData";
 import { parseHandle } from "@/lib/utils/handles";
@@ -46,7 +55,6 @@ async function parseRequestBody(req: Request) {
 
 const handler = async (req: NextRequest) => {
   const requestId = req.headers.get("x-request-id") ?? "unknown";
-  const env = getEnvServer();
 
   const tier = getTierFromUrl(req);
 
@@ -68,22 +76,22 @@ const handler = async (req: NextRequest) => {
     );
   }
 
-  const xPayment = req.headers.get("x-payment");
-  if (!xPayment) {
+  const paymentSignature = getPaymentSignatureHeader(req.headers);
+  if (!paymentSignature) {
     return NextResponse.json(
       { error: { code: "PAYMENT_REQUIRED" }, requestId },
-      { status: 402 }
+      { status: 402 },
     );
   }
 
-  let payment: ReturnType<typeof parseXPaymentHeader>;
+  let parsedPayment: ReturnType<typeof parsePaymentSignatureHeader>;
   try {
-    payment = parseXPaymentHeader(xPayment);
+    parsedPayment = parsePaymentSignatureHeader(paymentSignature);
   } catch (err: unknown) {
-    logger.error({ requestId, err }, "ping402.x402.parse_x_payment_failed");
+    logger.error({ requestId, err }, "ping402.x402.parse_payment_signature_failed");
     return NextResponse.json(
-      { error: { code: "INVALID_X_PAYMENT" }, requestId },
-      { status: 400 }
+      { error: { code: "INVALID_PAYMENT_SIGNATURE" }, requestId },
+      { status: 400 },
     );
   }
 
@@ -94,23 +102,22 @@ const handler = async (req: NextRequest) => {
       body: body.body,
       senderName: body.senderName?.trim() || undefined,
       senderContact: body.senderContact?.trim() || undefined,
-      payer: payment.payer,
-      paymentTxSig: payment.paymentTxSig,
-      xPaymentB64: xPayment,
-      x402Network: payment.network,
-      x402Scheme: payment.scheme,
-      x402Version: payment.x402Version,
+      payer: parsedPayment.tokenPayer,
+      paymentSignatureB64: paymentSignature,
+      x402Network: parsedPayment.paymentPayload.accepted.network,
+      x402Scheme: parsedPayment.paymentPayload.accepted.scheme,
+      x402Version: parsedPayment.paymentPayload.x402Version,
+      x402Asset: parsedPayment.paymentPayload.accepted.asset,
+      x402Amount: parsedPayment.paymentPayload.accepted.amount,
+      x402PayTo: parsedPayment.paymentPayload.accepted.payTo,
     });
-
-    const explorerUrl = solanaExplorerTxUrl(payment.paymentTxSig, env.NEXT_PUBLIC_NETWORK);
 
     logger.info(
       {
         requestId,
         toHandle: body.to,
         tier,
-        payer: payment.payer,
-        paymentTxSig: payment.paymentTxSig,
+        payer: parsedPayment.tokenPayer,
         deduped: result.deduped,
       },
       "ping402.ping.created"
@@ -120,23 +127,24 @@ const handler = async (req: NextRequest) => {
     if (wantsHtml) {
       const redirectUrl = new URL(`/u/${encodeURIComponent(body.to)}`, req.nextUrl.origin);
       redirectUrl.searchParams.set("sent", "1");
-      redirectUrl.searchParams.set("tx", payment.paymentTxSig);
-      return NextResponse.redirect(redirectUrl, 303);
+      const res = NextResponse.redirect(redirectUrl, 303);
+      res.headers.set("x-ping402-message-id", result.messageId);
+      return res;
     }
 
-    return NextResponse.json(
+    const res = NextResponse.json(
       {
         ok: true,
         ...result,
         tier,
         toHandle: body.to,
-        payer: payment.payer,
-        paymentTxSig: payment.paymentTxSig,
-        explorerUrl,
+        payer: parsedPayment.tokenPayer,
         requestId,
       },
-      { status: 200 }
+      { status: 200 },
     );
+    res.headers.set("x-ping402-message-id", result.messageId);
+    return res;
   } catch (err: unknown) {
     const data = getErrorData(err);
     const code = getErrorCode(data);
@@ -224,65 +232,94 @@ export async function POST(req: NextRequest) {
 
   const env = getEnvServer();
   const tierConfig = getPingTierConfig(tier);
-  const payTo = recipient.ownerWallet as SolanaAddress;
+  const payTo = recipient.ownerWallet;
 
-  return withX402(
-    handler,
-    payTo,
-    {
+  const routeConfig = {
+    accepts: {
+      scheme: "exact",
       price: tierConfig.priceUsd,
-      network: env.NEXT_PUBLIC_NETWORK,
-      config: {
-        description: `${tierConfig.label} ping: send a paid message to a ping402 inbox`,
-        mimeType: "application/json",
-        maxTimeoutSeconds: 120,
-        discoverable: true,
+      network: solanaChainIdForNetwork(env.NEXT_PUBLIC_NETWORK),
+      payTo,
+      maxTimeoutSeconds: 120,
+    },
+    description: `${tierConfig.label} ping: send a paid message to a ping402 inbox`,
+    mimeType: "application/json",
+    unpaidResponseBody: () => ({
+      contentType: "application/json",
+      body: { error: { code: "PAYMENT_REQUIRED" }, requestId },
+    }),
+    extensions: {
+      ...declareDiscoveryExtension({
+        bodyType: "form-data",
+        input: {
+          to: toHandle,
+          body: "Hello from ping402!",
+          senderName: "Sender",
+          senderContact: "@sender",
+        },
         inputSchema: {
-          queryParams: { tier, to: toHandle },
-          bodyType: "json",
-          bodyFields: {
+          type: "object",
+          properties: {
             to: { type: "string", description: "Recipient handle (3-32 chars)." },
             body: { type: "string", description: "Message body (max 280 chars)." },
             senderName: { type: "string", description: "Optional display name." },
-            senderContact: {
-              type: "string",
-              description: "Optional contact (email, handle, wallet).",
-            },
+            senderContact: { type: "string", description: "Optional contact info." },
+          },
+          required: ["to", "body"],
+          additionalProperties: false,
+        },
+        output: {
+          example: {
+            ok: true,
+            messageId: "convex_message_id",
+            deduped: false,
+            tier,
+            toHandle,
+            payer: "sender_wallet",
+            requestId,
           },
         },
-        outputSchema: {
-          type: "object",
-          properties: {
-            ok: { type: "boolean" },
-            messageId: { type: "string" },
-            deduped: { type: "boolean" },
-            tier: { type: "string" },
-            toHandle: { type: "string" },
-            payer: { type: "string" },
-            paymentTxSig: { type: "string" },
-            explorerUrl: { type: "string" },
-            requestId: { type: "string" },
-          },
-          required: [
-            "ok",
-            "messageId",
-            "deduped",
-            "tier",
-            "toHandle",
-            "payer",
-            "paymentTxSig",
-            "explorerUrl",
-            "requestId",
-          ],
-        },
-      },
+      } as unknown as Parameters<typeof declareDiscoveryExtension>[0]),
     },
-    getX402FacilitatorConfig(),
-    {
-      cdpClientKey: env.NEXT_PUBLIC_CDP_CLIENT_KEY,
-      appName: "ping402",
-      appLogo: "/favicon.ico",
-      sessionTokenEndpoint: "/api/x402/session-token",
+  } as const;
+
+  const protectedPost = withX402(
+    handler,
+    routeConfig,
+    getX402Server(),
+    getX402PaywallConfig(),
+    getX402PaywallProvider(),
+  );
+
+  const res = await protectedPost(req);
+
+  const paymentResponseB64 =
+    res.headers.get("payment-response") ?? res.headers.get("PAYMENT-RESPONSE");
+  const messageId = res.headers.get("x-ping402-message-id");
+
+  if (res.status < 400 && paymentResponseB64 && messageId) {
+    try {
+      const settle = parsePaymentResponseHeader(paymentResponseB64);
+      const txSig = settle.transaction;
+      if (txSig) {
+        await markMessagePaidForHandleSettled({
+          handle: toHandle,
+          messageId: messageId as Id<"messages">,
+          paymentTxSig: txSig,
+        });
+
+        const location = res.headers.get("location");
+        if (location) {
+          const url = new URL(location, req.nextUrl.origin);
+          url.searchParams.set("tx", txSig);
+          res.headers.set("location", url.toString());
+        }
+        res.headers.set("x-ping402-payment-tx", txSig);
+      }
+    } catch (err: unknown) {
+      logger.warn({ requestId, err }, "ping402.x402.parse_payment_response_failed");
     }
-  )(req);
+  }
+
+  return res;
 }

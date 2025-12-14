@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { withX402 } from "x402-next";
-import type { SolanaAddress } from "x402-next";
+import { withX402 } from "@x402/next";
 import nacl from "tweetnacl";
 import { PublicKey } from "@solana/web3.js";
 import { z } from "zod";
@@ -13,8 +12,12 @@ import { buildPing402SignInMessage } from "@/lib/solana/siwsMessage";
 import { logger } from "@/lib/observability/logger";
 import { getErrorCode, getErrorData } from "@/lib/utils/errorData";
 import { parseHandle } from "@/lib/utils/handles";
-import { getX402FacilitatorConfig } from "@/lib/x402/facilitator";
-import { parseXPaymentHeader } from "@/lib/x402/parseXPayment";
+import { getX402PaywallConfig, getX402PaywallProvider } from "@/lib/x402/paywall";
+import { getX402Server } from "@/lib/x402/server";
+import {
+  getPaymentSignatureHeader,
+  parsePaymentSignatureHeader,
+} from "@/lib/x402/parsePayment";
 
 const BodySchema = z.object({
   publicKey: z.string().min(32),
@@ -33,10 +36,14 @@ export const runtime = "nodejs";
 
 const HANDLE_CLAIM_PRICE_USD = "$0.10" as const;
 
-function resolveClaimPayToWallet(): SolanaAddress | null {
+function resolveClaimPayToWallet(): string | null {
   const value = getEnvServer().PING402_CLAIM_PAY_TO_WALLET?.trim();
   if (!value) return null;
-  return value as SolanaAddress;
+  try {
+    return new PublicKey(value).toBase58();
+  } catch {
+    return null;
+  }
 }
 
 async function parseRequestBody(req: Request): Promise<z.infer<typeof BodySchema>> {
@@ -104,14 +111,14 @@ async function handler(req: NextRequest, input: { requiresPaymentForClaim: boole
   }
 
   if (input.requiresPaymentForClaim) {
-    const xPayment = req.headers.get("X-PAYMENT");
-    if (!xPayment) {
+    const paymentSignature = getPaymentSignatureHeader(req.headers);
+    if (!paymentSignature) {
       return responseError(req, { requestId, handle, code: "PAYMENT_REQUIRED", status: 402 });
     }
 
     try {
-      const payment = parseXPaymentHeader(xPayment);
-      if (payment.payer !== body.publicKey) {
+      const payment = parsePaymentSignatureHeader(paymentSignature);
+      if (payment.tokenPayer !== body.publicKey) {
         return responseError(req, {
           requestId,
           handle,
@@ -120,8 +127,8 @@ async function handler(req: NextRequest, input: { requiresPaymentForClaim: boole
         });
       }
     } catch (err: unknown) {
-      logger.error({ requestId, err }, "ping402.auth.parse_x_payment_failed");
-      return responseError(req, { requestId, handle, code: "INVALID_X_PAYMENT", status: 400 });
+      logger.error({ requestId, err }, "ping402.auth.parse_payment_signature_failed");
+      return responseError(req, { requestId, handle, code: "INVALID_PAYMENT_SIGNATURE", status: 400 });
     }
   }
 
@@ -238,45 +245,29 @@ export async function POST(req: NextRequest) {
 
   const env = getEnvServer();
 
-  return withX402(
-    (nextReq) => handler(nextReq, { requiresPaymentForClaim: true }),
-    payTo,
-    {
+  const routeConfig = {
+    accepts: {
+      scheme: "exact",
       price: HANDLE_CLAIM_PRICE_USD,
-      network: env.NEXT_PUBLIC_NETWORK,
-      config: {
-        description: "Claim a ping402 handle (creator onboarding)",
-        mimeType: "text/html",
-        maxTimeoutSeconds: 120,
-        discoverable: false,
-        inputSchema: {
-          bodyType: "form-data",
-          bodyFields: {
-            publicKey: { type: "string", description: "Solana wallet base58." },
-            signature: { type: "string", description: "Base64-encoded signature." },
-            nonce: { type: "string", description: "One-time nonce from /api/auth/nonce." },
-            issuedAt: { type: "string", description: "ISO timestamp from /api/auth/nonce." },
-            handle: { type: "string", description: "Desired handle (3-32 chars)." },
-            displayName: { type: "string", description: "Optional display name." },
-            bio: { type: "string", description: "Optional bio (max 280 chars)." },
-          },
-        },
-        outputSchema: {
-          type: "object",
-          properties: {
-            ok: { type: "boolean" },
-            requestId: { type: "string" },
-          },
-          required: ["ok", "requestId"],
-        },
-      },
+      network: solanaChainIdForNetwork(env.NEXT_PUBLIC_NETWORK),
+      payTo,
+      maxTimeoutSeconds: 120,
     },
-    getX402FacilitatorConfig(),
-    {
-      cdpClientKey: env.NEXT_PUBLIC_CDP_CLIENT_KEY,
-      appName: "ping402",
-      appLogo: "/favicon.ico",
-      sessionTokenEndpoint: "/api/x402/session-token",
-    }
-  )(req);
+    description: "Claim a ping402 handle (creator onboarding)",
+    mimeType: "text/html",
+    unpaidResponseBody: () => ({
+      contentType: "application/json",
+      body: { error: { code: "PAYMENT_REQUIRED" }, requestId },
+    }),
+  } as const;
+
+  const protectedPost = withX402(
+    (nextReq) => handler(nextReq, { requiresPaymentForClaim: true }),
+    routeConfig,
+    getX402Server(),
+    getX402PaywallConfig(),
+    getX402PaywallProvider(),
+  );
+
+  return protectedPost(req);
 }

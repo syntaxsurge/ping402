@@ -36,13 +36,23 @@ export async function createPaidMessageForHandle(input: {
   senderName?: string;
   senderContact?: string;
   payer: string;
-  paymentTxSig: string;
-  xPaymentB64: string;
-  x402Network?: string;
-  x402Scheme?: string;
-  x402Version?: number;
+  paymentSignatureB64: string;
+  x402Network: string;
+  x402Scheme: string;
+  x402Version: number;
+  x402Asset: string;
+  x402Amount: string;
+  x402PayTo: string;
 }) {
   return await getClient().mutation(api.messages.createPaidForHandle, input);
+}
+
+export async function markMessagePaidForHandleSettled(input: {
+  handle: string;
+  messageId: Id<"messages">;
+  paymentTxSig: string;
+}) {
+  return await getClient().mutation(api.messages.markPaidForHandleSettled, input);
 }
 
 export async function listMessagesForHandleByStatus(input: {

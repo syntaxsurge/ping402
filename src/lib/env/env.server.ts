@@ -20,7 +20,6 @@ const ServerEnvSchema = z.object({
   NEXT_PUBLIC_FACILITATOR_URL: UrlString.default("https://x402.org/facilitator").transform((v) =>
     v.replace(/\/$/, ""),
   ),
-  NEXT_PUBLIC_CDP_CLIENT_KEY: OptionalNonEmptyString.pipe(z.string().min(1).optional()),
 
   CDP_API_KEY_ID: OptionalNonEmptyString.pipe(z.string().min(1).optional()),
   CDP_API_KEY_SECRET: OptionalNonEmptyString.pipe(z.string().min(1).optional()),
@@ -29,15 +28,13 @@ const ServerEnvSchema = z.object({
   PING402_CLAIM_PAY_TO_WALLET: OptionalNonEmptyString.pipe(z.string().min(32).optional()),
 })
 .superRefine((env, ctx) => {
-  const needsCdpKeys =
-    env.NEXT_PUBLIC_FACILITATOR_URL === "https://api.cdp.coinbase.com/platform/v2/x402" ||
-    Boolean(env.NEXT_PUBLIC_CDP_CLIENT_KEY);
+  const needsCdpKeys = env.NEXT_PUBLIC_FACILITATOR_URL === "https://api.cdp.coinbase.com/platform/v2/x402";
 
   if (needsCdpKeys && !env.CDP_API_KEY_ID) {
     ctx.addIssue({
       code: z.ZodIssueCode.custom,
       path: ["CDP_API_KEY_ID"],
-      message: "CDP_API_KEY_ID is required when using the CDP facilitator or Coinbase Onramp.",
+      message: "CDP_API_KEY_ID is required when using the CDP facilitator.",
     });
   }
 
@@ -45,7 +42,7 @@ const ServerEnvSchema = z.object({
     ctx.addIssue({
       code: z.ZodIssueCode.custom,
       path: ["CDP_API_KEY_SECRET"],
-      message: "CDP_API_KEY_SECRET is required when using the CDP facilitator or Coinbase Onramp.",
+      message: "CDP_API_KEY_SECRET is required when using the CDP facilitator.",
     });
   }
 });
