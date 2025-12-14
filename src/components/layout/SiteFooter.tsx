@@ -35,6 +35,12 @@ export function SiteFooter() {
             <Link className="text-muted-foreground hover:text-foreground" href="/how-it-works">
               How it works
             </Link>
+            <Link className="text-muted-foreground hover:text-foreground" href="/fund">
+              Funding
+            </Link>
+            <Link className="text-muted-foreground hover:text-foreground" href="/demo/x402">
+              x402 demo
+            </Link>
             <Link className="text-muted-foreground hover:text-foreground" href="/#tiers">
               Tiers
             </Link>

@@ -6,12 +6,6 @@ import { rateLimiter } from "./lib/rateLimiter";
 import { enforcePingPolicy } from "./lib/messagePolicy";
 
 const Tier = v.union(v.literal("standard"), v.literal("priority"), v.literal("vip"));
-const MessageStatus = v.union(
-  v.literal("pending"),
-  v.literal("new"),
-  v.literal("replied"),
-  v.literal("archived"),
-);
 const InboxStatus = v.union(v.literal("new"), v.literal("replied"), v.literal("archived"));
 
 function priceCentsForTier(tier: "standard" | "priority" | "vip"): number {

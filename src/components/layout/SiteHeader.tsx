@@ -10,6 +10,8 @@ import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 export function SiteHeader() {
   const navLinks = [
     { href: "/how-it-works", label: "How it works" },
+    { href: "/fund", label: "Fund" },
+    { href: "/demo/x402", label: "x402 demo" },
     { href: "/#tiers", label: "Tiers" },
     { href: "/#faq", label: "FAQ" },
   ] as const;

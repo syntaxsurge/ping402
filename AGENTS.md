@@ -363,6 +363,8 @@ Select **one** backend stack (Drizzle+Supabase or Convex) per project by default
 
 - `GET /` — marketing landing page
 - `GET /how-it-works` — end-to-end x402 flow explanation
+- `GET /fund` — funding guide for devnet/mainnet
+- `GET /demo/x402` — x402 inspection page (shows 402 headers + decoded requirements)
 - `GET /ping` — handle search + send/claim entrypoint
 - `GET /u/[handle]` — public inbox profile page
 - `GET /u/[handle]/opengraph-image` — dynamic OpenGraph image for profile sharing
@@ -377,6 +379,7 @@ Select **one** backend stack (Drizzle+Supabase or Convex) per project by default
 - `GET /api/handles/search?query=[query]` — handle search + suggestions for onboarding UI
 - `POST /api/auth/nonce` — issues a one-time sign-in nonce
 - `POST /api/auth/verify` — verifies signature, claims handle, and sets creator session cookie (x402-paywalled for new handle claims)
+- `GET /api/x402/demo` — x402-paywalled demo resource (returns PAYMENT-REQUIRED when unpaid)
 - `GET /api/x402/discovery/resources` — facilitator discovery proxy (HTTP resources)
 - `GET /robots.txt` — dynamic robots rules
 - `GET /sitemap.xml` — dynamic sitemap
@@ -389,7 +392,7 @@ Middleware:
 - **Next.js 15 App Router (`src/`)**: UI routes live in `src/app/**` and are organized into route groups: `(marketing)` for public pages, `(auth)` for creator handle claim/sign-in, and `(app)` for the authenticated creator workspace. Shared UI lives in `src/components/**`.
 - **Convex backend**: `convex/convex.config.ts` installs the `@convex-dev/rate-limiter` component. `convex/schema.ts` defines `profiles`, `messages`, `inboxStats`, and `authNonces`. `profiles` store `handle`, `displayName`, `ownerWallet`, and optional `bio`. `messages` store tier/body, payer, x402 proof (`paymentSignatureB64`) plus settlement receipt (`paymentTxSig`), x402 metadata (`x402Network`, `x402Scheme`, `x402Version`, `x402Asset`, `x402Amount`, `x402PayTo`), status (`pending`, `new`, `replied`, `archived`), and `priceCents`. `inboxStats` stores per-profile aggregate counts + revenue for the dashboard. `convex/profiles.ts` implements `byHandle` (query) and `claimHandle` (mutation). `convex/messages.ts` implements `createPaidForHandle` (mutation), `markPaidForHandleSettled` (mutation), `listForHandleByStatus` (paginated query), `getForHandleById` (query), `getStatsForHandle` (query), and `setStatusForHandle` (mutation). `convex/auth.ts` implements `storeNonce` and `consumeNonce` mutations.
 - **Server data layer**: `src/lib/db/convex/server.ts` uses `ConvexHttpClient` to call Convex from Server Components and Server Actions.
-- **x402 + Solana payments**: `src/app/api/ping/send/route.ts` and `src/app/api/auth/verify/route.ts` wrap handlers with `withX402` from `@x402/next`, using the Solana `exact` scheme registered in `src/lib/x402/server.ts`. Payment proofs arrive in the `PAYMENT-SIGNATURE` header and settlement receipts arrive in `PAYMENT-RESPONSE`. `src/app/api/ping/send/route.ts` declares Bazaar discovery metadata (via `@x402/extensions/bazaar`) and persists the settled Solana transaction signature to Convex. `src/app/api/x402/discovery/resources/route.ts` proxies the facilitator discovery endpoint for HTTP resources.
+- **x402 + Solana payments**: `src/app/api/ping/send/route.ts`, `src/app/api/auth/verify/route.ts`, and `src/app/api/x402/demo/route.ts` wrap handlers with `withX402` from `@x402/next`, using the Solana `exact` scheme registered in `src/lib/x402/server.ts`. Payment proofs arrive in the `PAYMENT-SIGNATURE` header and settlement receipts arrive in `PAYMENT-RESPONSE`. `src/app/api/ping/send/route.ts` declares Bazaar discovery metadata (via `@x402/extensions/bazaar`) and persists the settled Solana transaction signature to Convex. `src/app/api/x402/discovery/resources/route.ts` proxies the facilitator discovery endpoint for HTTP resources.
 - **Creator sessions**: `src/app/(auth)/owner-signin/page.tsx` signs a message that includes the selected handle. `src/app/api/auth/*` verifies it, claims the handle in Convex (x402 paywall for new handle claims), and sets an HttpOnly session cookie via `src/lib/auth/ownerSession.ts`. `src/app/(app)/layout.tsx` requires that session for the dashboard and inbox.
 - **Solana wallet UX**: `src/components/solana/SolanaProvider.tsx` is mounted in `src/app/layout.tsx` so the marketing/auth header can expose wallet connect state and reuse the same wallet modal across routes.
 - **Site metadata / SEO**: `src/lib/config/site.ts` centralizes the canonical site URL for absolute links used by `src/app/robots.ts`, `src/app/sitemap.ts`, and `src/app/(marketing)/u/[handle]/opengraph-image.tsx`.

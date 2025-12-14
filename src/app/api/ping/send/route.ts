@@ -78,9 +78,10 @@ const handler = async (req: NextRequest) => {
 
   const paymentSignature = getPaymentSignatureHeader(req.headers);
   if (!paymentSignature) {
+    logger.error({ requestId }, "ping402.x402.missing_payment_signature");
     return NextResponse.json(
-      { error: { code: "PAYMENT_REQUIRED" }, requestId },
-      { status: 402 },
+      { error: { code: "MISSING_PAYMENT_SIGNATURE" }, requestId },
+      { status: 500 },
     );
   }
 
