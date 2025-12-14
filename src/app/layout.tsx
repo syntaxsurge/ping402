@@ -5,6 +5,7 @@ import { Toaster } from "sonner";
 import { ThemeProvider } from "@/components/theme/ThemeProvider";
 import { SolanaProvider } from "@/components/solana/SolanaProvider";
 import { siteConfig } from "@/lib/config/site";
+import { getEnvServer } from "@/lib/env/env.server";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -29,6 +30,8 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const env = getEnvServer();
+
   return (
     <html lang="en" suppressHydrationWarning>
       <body
@@ -40,7 +43,7 @@ export default function RootLayout({
           enableSystem
           disableTransitionOnChange
         >
-          <SolanaProvider>{children}</SolanaProvider>
+          <SolanaProvider networkId={env.X402_NETWORK}>{children}</SolanaProvider>
           <Toaster richColors closeButton />
         </ThemeProvider>
       </body>

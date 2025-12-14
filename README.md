@@ -26,8 +26,8 @@ Paid inbox pings on Solana using x402 (HTTP 402 Payment Required), with messages
 3. Configure env vars:
 
    - Copy `.env.example` values into `.env.local` and set:
-     - `NEXT_PUBLIC_NETWORK` (`solana-devnet` or `solana`)
-     - `NEXT_PUBLIC_FACILITATOR_URL`
+     - `X402_NETWORK` (CAIP-2: `solana:EtWTRABZaYq6iMfeYKouRu166VU2xqa1` for devnet, `solana:5eykt4UsFv8P8NJdTREpY1vzqKqZKvdp` for mainnet)
+     - `X402_FACILITATOR_URL`
      - `PING402_CLAIM_PAY_TO_WALLET` (required; receives x402 handle-claim fees)
      - `CDP_API_KEY_ID` and `CDP_API_KEY_SECRET` (required when using the CDP facilitator URL)
      - `PING402_JWT_SECRET` (required; used for the creator HttpOnly session cookie)

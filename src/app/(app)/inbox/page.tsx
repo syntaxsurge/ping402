@@ -237,7 +237,7 @@ export default async function InboxPage({
                         {m.paymentTxSig && isSolanaTxSignature(m.paymentTxSig) ? (
                           <Link
                             className="text-primary underline-offset-4 hover:underline"
-                            href={solanaExplorerTxUrl(m.paymentTxSig, env.NEXT_PUBLIC_NETWORK)}
+                            href={solanaExplorerTxUrl(m.paymentTxSig, env.X402_NETWORK)}
                             target="_blank"
                             rel="noreferrer"
                           >

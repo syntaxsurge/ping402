@@ -1,6 +1,7 @@
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
+import { solanaNetworkLabel, type Ping402SvmNetwork } from "@/lib/solana/chain";
 
 function shortAddress(address: string) {
   if (address.length <= 12) return address;
@@ -11,17 +12,19 @@ export function PaymentSummaryCard({
   tierLabel,
   priceUsd,
   recipientHandle,
-  network,
+  networkId,
   payToAddress,
   facilitatorUrl,
 }: {
   tierLabel: string;
   priceUsd: string;
   recipientHandle: string | null;
-  network: string;
+  networkId: Ping402SvmNetwork;
   payToAddress: string | null;
   facilitatorUrl: string;
 }) {
+  const networkLabel = solanaNetworkLabel(networkId);
+
   return (
     <Card className="bg-card/60 backdrop-blur">
       <CardHeader>
@@ -42,7 +45,10 @@ export function PaymentSummaryCard({
           </div>
           <div className="space-y-1">
             <div className="text-muted-foreground">Network</div>
-            <div className="font-medium">{network}</div>
+            <div className="font-medium capitalize">{networkLabel}</div>
+            <div className="break-all font-mono text-[11px] text-muted-foreground">
+              {networkId}
+            </div>
           </div>
         </div>
 
@@ -87,4 +93,3 @@ export function PaymentSummaryCard({
     </Card>
   );
 }
-

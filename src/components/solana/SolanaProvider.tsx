@@ -12,14 +12,20 @@ import { SolflareWalletAdapter } from "@solana/wallet-adapter-solflare";
 
 import "@solana/wallet-adapter-react-ui/styles.css";
 
-function getWalletNetwork(): WalletAdapterNetwork {
-  return process.env.NEXT_PUBLIC_NETWORK === "solana"
-    ? WalletAdapterNetwork.Mainnet
-    : WalletAdapterNetwork.Devnet;
+import { isSolanaDevnet, type Ping402SvmNetwork } from "@/lib/solana/chain";
+
+function getWalletNetwork(networkId: Ping402SvmNetwork): WalletAdapterNetwork {
+  return isSolanaDevnet(networkId) ? WalletAdapterNetwork.Devnet : WalletAdapterNetwork.Mainnet;
 }
 
-export function SolanaProvider({ children }: { children: ReactNode }) {
-  const network = getWalletNetwork();
+export function SolanaProvider({
+  children,
+  networkId,
+}: {
+  children: ReactNode;
+  networkId: Ping402SvmNetwork;
+}) {
+  const network = getWalletNetwork(networkId);
   const endpoint = useMemo(() => clusterApiUrl(network), [network]);
 
   const wallets = useMemo(
@@ -35,4 +41,3 @@ export function SolanaProvider({ children }: { children: ReactNode }) {
     </ConnectionProvider>
   );
 }
-

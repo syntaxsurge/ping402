@@ -4,19 +4,23 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { getEnvServer } from "@/lib/env/env.server";
+import { isSolanaDevnet, solanaNetworkLabel } from "@/lib/solana/chain";
 
 export const dynamic = "force-dynamic";
 
 export default function FundPage() {
   const env = getEnvServer();
-  const isDevnet = env.NEXT_PUBLIC_NETWORK === "solana-devnet";
+  const isDevnet = isSolanaDevnet(env.X402_NETWORK);
+  const networkLabel = solanaNetworkLabel(env.X402_NETWORK);
 
   return (
     <div className="mx-auto max-w-3xl space-y-6">
       <header className="space-y-2">
         <div className="flex flex-wrap items-center gap-2">
           <h1 className="text-3xl font-semibold tracking-tight">Funding</h1>
-          <Badge variant="secondary">{env.NEXT_PUBLIC_NETWORK}</Badge>
+          <Badge variant="secondary" className="capitalize">
+            {networkLabel}
+          </Badge>
         </div>
         <p className="text-muted-foreground">
           ping402 paywalls paid actions using x402. Your wallet needs enough balance for fees and
@@ -35,7 +39,11 @@ export default function FundPage() {
           <ol className="list-decimal space-y-2 pl-5">
             <li>
               Confirm the app is pointing at the right network:{" "}
-              <code className="rounded bg-muted px-1 py-0.5">{env.NEXT_PUBLIC_NETWORK}</code>.
+              <code className="rounded bg-muted px-1 py-0.5">{networkLabel}</code>{" "}
+              <span className="break-all font-mono text-xs text-muted-foreground">
+                ({env.X402_NETWORK})
+              </span>
+              .
             </li>
             <li>Ensure your wallet has SOL for transaction fees.</li>
             <li>
@@ -105,7 +113,7 @@ export default function FundPage() {
           <CardTitle className="text-base">Current facilitator</CardTitle>
         </CardHeader>
         <CardContent className="space-y-2 text-sm text-muted-foreground">
-          <div className="break-all font-mono text-xs">{env.NEXT_PUBLIC_FACILITATOR_URL}</div>
+          <div className="break-all font-mono text-xs">{env.X402_FACILITATOR_URL}</div>
           <p className="text-xs">
             This facilitator is used to verify and settle x402 payments against Solana.
           </p>
@@ -114,4 +122,3 @@ export default function FundPage() {
     </div>
   );
 }
-

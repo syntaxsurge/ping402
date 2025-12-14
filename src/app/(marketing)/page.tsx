@@ -227,10 +227,17 @@ export default function HomePage() {
           <AccordionItem value="mainnet">
             <AccordionTrigger>Devnet or mainnet?</AccordionTrigger>
             <AccordionContent>
-              The app supports both; choose{" "}
-              <code className="rounded bg-muted px-1 py-0.5">solana-devnet</code> or{" "}
-              <code className="rounded bg-muted px-1 py-0.5">solana</code> via environment
-              configuration.
+              The app supports both; set{" "}
+              <code className="rounded bg-muted px-1 py-0.5">X402_NETWORK</code> to the Solana
+              CAIP-2 chain id for{" "}
+              <code className="rounded bg-muted px-1 py-0.5">
+                solana:EtWTRABZaYq6iMfeYKouRu166VU2xqa1
+              </code>{" "}
+              (devnet) or{" "}
+              <code className="rounded bg-muted px-1 py-0.5">
+                solana:5eykt4UsFv8P8NJdTREpY1vzqKqZKvdp
+              </code>{" "}
+              (mainnet).
             </AccordionContent>
           </AccordionItem>
           <AccordionItem value="spam">

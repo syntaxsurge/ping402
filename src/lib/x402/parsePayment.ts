@@ -13,7 +13,7 @@ export type ParsedPaymentSignature = {
 };
 
 export function getPaymentSignatureHeader(headers: Headers): string | null {
-  return headers.get("payment-signature") ?? headers.get("x-payment");
+  return headers.get("payment-signature");
 }
 
 export function parsePaymentSignatureHeader(paymentSignatureB64: string): ParsedPaymentSignature {
@@ -34,4 +34,3 @@ export function parsePaymentSignatureHeader(paymentSignatureB64: string): Parsed
 export function parsePaymentResponseHeader(paymentResponseB64: string): SettleResponse {
   return decodePaymentResponseHeader(paymentResponseB64);
 }
-

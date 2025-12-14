@@ -3,7 +3,6 @@ import { withX402 } from "@x402/next";
 import { PublicKey } from "@solana/web3.js";
 
 import { getEnvServer } from "@/lib/env/env.server";
-import { solanaChainIdForNetwork } from "@/lib/solana/chain";
 import { getX402PaywallConfig, getX402PaywallProvider } from "@/lib/x402/paywall";
 import { getX402Server } from "@/lib/x402/server";
 
@@ -12,14 +11,8 @@ export const runtime = "nodejs";
 
 const DEMO_PRICE_USD = "$0.01" as const;
 
-function resolveDemoPayToWallet(): string | null {
-  const value = getEnvServer().PING402_CLAIM_PAY_TO_WALLET?.trim();
-  if (!value) return null;
-  try {
-    return new PublicKey(value).toBase58();
-  } catch {
-    return null;
-  }
+function resolveDemoPayToWallet(): string {
+  return new PublicKey(getEnvServer().PING402_CLAIM_PAY_TO_WALLET).toBase58();
 }
 
 async function handler(req: NextRequest) {
@@ -34,12 +27,6 @@ async function handler(req: NextRequest) {
 export async function GET(req: NextRequest) {
   const requestId = req.headers.get("x-request-id") ?? "unknown";
   const payTo = resolveDemoPayToWallet();
-  if (!payTo) {
-    return NextResponse.json(
-      { error: { code: "SERVER_NOT_CONFIGURED" }, requestId },
-      { status: 500 },
-    );
-  }
 
   const env = getEnvServer();
 
@@ -47,7 +34,7 @@ export async function GET(req: NextRequest) {
     accepts: {
       scheme: "exact",
       price: DEMO_PRICE_USD,
-      network: solanaChainIdForNetwork(env.NEXT_PUBLIC_NETWORK),
+      network: env.X402_NETWORK,
       payTo,
       maxTimeoutSeconds: 120,
     },
@@ -69,4 +56,3 @@ export async function GET(req: NextRequest) {
 
   return protectedGet(req);
 }
-

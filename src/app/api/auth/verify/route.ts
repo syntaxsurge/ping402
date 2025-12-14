@@ -7,7 +7,6 @@ import { z } from "zod";
 import { claimHandle, consumeAuthNonce, getProfileByHandle } from "@/lib/db/convex/server";
 import { getEnvServer } from "@/lib/env/env.server";
 import { setOwnerSession } from "@/lib/auth/ownerSession";
-import { solanaChainIdForNetwork } from "@/lib/solana/chain";
 import { buildPing402SignInMessage } from "@/lib/solana/siwsMessage";
 import { logger } from "@/lib/observability/logger";
 import { getErrorCode, getErrorData } from "@/lib/utils/errorData";
@@ -36,14 +35,8 @@ export const runtime = "nodejs";
 
 const HANDLE_CLAIM_PRICE_USD = "$0.10" as const;
 
-function resolveClaimPayToWallet(): string | null {
-  const value = getEnvServer().PING402_CLAIM_PAY_TO_WALLET?.trim();
-  if (!value) return null;
-  try {
-    return new PublicKey(value).toBase58();
-  } catch {
-    return null;
-  }
+function resolveClaimPayToWallet(): string {
+  return new PublicKey(getEnvServer().PING402_CLAIM_PAY_TO_WALLET).toBase58();
 }
 
 async function parseRequestBody(req: Request): Promise<z.infer<typeof BodySchema>> {
@@ -113,7 +106,8 @@ async function handler(req: NextRequest, input: { requiresPaymentForClaim: boole
   if (input.requiresPaymentForClaim) {
     const paymentSignature = getPaymentSignatureHeader(req.headers);
     if (!paymentSignature) {
-      return responseError(req, { requestId, handle, code: "PAYMENT_REQUIRED", status: 402 });
+      logger.error({ requestId, handle }, "ping402.x402.missing_payment_signature");
+      return responseError(req, { requestId, handle, code: "INTERNAL_ERROR", status: 500 });
     }
 
     try {
@@ -152,7 +146,7 @@ async function handler(req: NextRequest, input: { requiresPaymentForClaim: boole
 
   const domain = req.headers.get("host") ?? req.nextUrl.host;
   const uri = req.nextUrl.origin;
-  const chainId = solanaChainIdForNetwork(env.NEXT_PUBLIC_NETWORK);
+  const chainId = env.X402_NETWORK;
 
   const message = buildPing402SignInMessage({
     domain,
@@ -238,10 +232,6 @@ export async function POST(req: NextRequest) {
   }
 
   const payTo = resolveClaimPayToWallet();
-  if (!payTo) {
-    logger.error({ requestId }, "ping402.auth.claim_pay_to_wallet_missing");
-    return responseError(req, { requestId, handle, code: "SERVER_NOT_CONFIGURED", status: 500 });
-  }
 
   const env = getEnvServer();
 
@@ -249,7 +239,7 @@ export async function POST(req: NextRequest) {
     accepts: {
       scheme: "exact",
       price: HANDLE_CLAIM_PRICE_USD,
-      network: solanaChainIdForNetwork(env.NEXT_PUBLIC_NETWORK),
+      network: env.X402_NETWORK,
       payTo,
       maxTimeoutSeconds: 120,
     },

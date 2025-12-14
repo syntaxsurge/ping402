@@ -69,7 +69,7 @@ export default async function MessageDetailPage({
 
   const paymentTxSig = message.paymentTxSig ?? null;
   const hasReceipt = Boolean(paymentTxSig && isSolanaTxSignature(paymentTxSig));
-  const explorerUrl = hasReceipt ? solanaExplorerTxUrl(paymentTxSig!, env.NEXT_PUBLIC_NETWORK) : null;
+  const explorerUrl = hasReceipt ? solanaExplorerTxUrl(paymentTxSig!, env.X402_NETWORK) : null;
 
   return (
     <div className="space-y-8">

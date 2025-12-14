@@ -126,11 +126,11 @@ export default async function PingComposePage({
             tierLabel={meta.label}
             priceUsd={meta.priceUsd}
             recipientHandle={recipient?.handle ?? (toHandle || null)}
-            network={env.NEXT_PUBLIC_NETWORK}
+            networkId={env.X402_NETWORK}
             payToAddress={recipient?.ownerWallet ?? null}
-            facilitatorUrl={env.NEXT_PUBLIC_FACILITATOR_URL}
+            facilitatorUrl={env.X402_FACILITATOR_URL}
           />
-          <FundingCta network={env.NEXT_PUBLIC_NETWORK} />
+          <FundingCta networkId={env.X402_NETWORK} />
         </div>
       </div>
     </div>

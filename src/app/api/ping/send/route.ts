@@ -18,7 +18,6 @@ import {
 } from "@/lib/x402/parsePayment";
 import { getX402Server } from "@/lib/x402/server";
 import { logger } from "@/lib/observability/logger";
-import { solanaChainIdForNetwork } from "@/lib/solana/chain";
 import { getPingTierConfig, PingTierSchema, type PingTier } from "@/lib/ping/tiers";
 import { getErrorCode, getErrorData } from "@/lib/utils/errorData";
 import { parseHandle } from "@/lib/utils/handles";
@@ -239,7 +238,7 @@ export async function POST(req: NextRequest) {
     accepts: {
       scheme: "exact",
       price: tierConfig.priceUsd,
-      network: solanaChainIdForNetwork(env.NEXT_PUBLIC_NETWORK),
+      network: env.X402_NETWORK,
       payTo,
       maxTimeoutSeconds: 120,
     },
@@ -294,8 +293,7 @@ export async function POST(req: NextRequest) {
 
   const res = await protectedPost(req);
 
-  const paymentResponseB64 =
-    res.headers.get("payment-response") ?? res.headers.get("PAYMENT-RESPONSE");
+  const paymentResponseB64 = res.headers.get("payment-response");
   const messageId = res.headers.get("x-ping402-message-id");
 
   if (res.status < 400 && paymentResponseB64 && messageId) {

@@ -144,7 +144,7 @@ export default async function UserProfilePage({
                   {" "}
                   (<Link
                     className="text-primary underline-offset-4 hover:underline"
-                    href={solanaExplorerTxUrl(tx, env.NEXT_PUBLIC_NETWORK)}
+                    href={solanaExplorerTxUrl(tx, env.X402_NETWORK)}
                     target="_blank"
                     rel="noreferrer"
                   >

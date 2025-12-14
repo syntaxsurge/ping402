@@ -23,8 +23,6 @@ function pickHeaders(all: Headers) {
     "payment-required",
     "payment-signature",
     "payment-response",
-    "x-payment",
-    "x-payment-response",
     "content-type",
   ];
   const out: Record<string, string> = {};
@@ -130,4 +128,3 @@ export function X402InspectPanel() {
     </Card>
   );
 }
-

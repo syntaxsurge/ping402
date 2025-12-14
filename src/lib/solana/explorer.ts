@@ -1,6 +1,6 @@
 import bs58 from "bs58";
 
-export type SolanaNetwork = "solana-devnet" | "solana";
+import { isSolanaDevnet, type Ping402SvmNetwork } from "@/lib/solana/chain";
 
 export function isSolanaTxSignature(signature: string): boolean {
   try {
@@ -10,8 +10,8 @@ export function isSolanaTxSignature(signature: string): boolean {
   }
 }
 
-export function solanaExplorerTxUrl(signature: string, network: SolanaNetwork): string {
+export function solanaExplorerTxUrl(signature: string, network: Ping402SvmNetwork): string {
   const url = new URL(`https://explorer.solana.com/tx/${encodeURIComponent(signature)}`);
-  if (network === "solana-devnet") url.searchParams.set("cluster", "devnet");
+  if (isSolanaDevnet(network)) url.searchParams.set("cluster", "devnet");
   return url.toString();
 }

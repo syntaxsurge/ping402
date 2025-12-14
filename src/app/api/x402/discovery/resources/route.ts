@@ -26,9 +26,9 @@ export async function GET(req: NextRequest) {
     );
   }
 
-  const base = env.NEXT_PUBLIC_FACILITATOR_URL.endsWith("/")
-    ? env.NEXT_PUBLIC_FACILITATOR_URL
-    : `${env.NEXT_PUBLIC_FACILITATOR_URL}/`;
+  const base = env.X402_FACILITATOR_URL.endsWith("/")
+    ? env.X402_FACILITATOR_URL
+    : `${env.X402_FACILITATOR_URL}/`;
 
   const url = new URL("discovery/resources", base);
   url.searchParams.set("type", parsed.data.type);
@@ -50,7 +50,7 @@ export async function GET(req: NextRequest) {
   return NextResponse.json(
     {
       ok: res.ok,
-      facilitatorUrl: env.NEXT_PUBLIC_FACILITATOR_URL,
+      facilitatorUrl: env.X402_FACILITATOR_URL,
       data: body,
     },
     { status: res.ok ? 200 : 502 }

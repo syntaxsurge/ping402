@@ -93,10 +93,6 @@ function OwnerSignInInner() {
       toast.error("Invalid x402 payment proof. Please try again.");
       return;
     }
-    if (errorCode === "SERVER_NOT_CONFIGURED") {
-      toast.error("Server is missing claim payment configuration.");
-      return;
-    }
     toast.error("Sign-in failed. Please try again.");
   }, [errorCode]);
 

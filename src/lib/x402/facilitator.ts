@@ -17,7 +17,7 @@ export function getX402FacilitatorClient(): HTTPFacilitatorClient {
   if (cached) return cached;
 
   const env = getEnvServer();
-  const url = normalizeUrl(env.NEXT_PUBLIC_FACILITATOR_URL);
+  const url = normalizeUrl(env.X402_FACILITATOR_URL);
 
   const config: FacilitatorConfig = { url };
 

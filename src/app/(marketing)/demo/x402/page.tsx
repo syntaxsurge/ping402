@@ -12,9 +12,9 @@ export default function X402DemoPage() {
           showing the payment headers returned by ping402.
         </p>
         <p className="text-sm text-muted-foreground">
-          If the demo endpoint returns <code>SERVER_NOT_CONFIGURED</code>, set{" "}
-          <code className="rounded bg-muted px-1 py-0.5">PING402_CLAIM_PAY_TO_WALLET</code> in
-          your environment.
+          If the demo endpoint fails, confirm{" "}
+          <code className="rounded bg-muted px-1 py-0.5">PING402_CLAIM_PAY_TO_WALLET</code> is
+          set to a valid Solana address in your environment.
         </p>
       </header>
 
