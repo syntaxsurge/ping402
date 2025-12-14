@@ -33,7 +33,8 @@ export default function PingLandingPage() {
         </CardHeader>
         <CardContent className="space-y-2 text-sm text-muted-foreground">
           <p>
-            If a handle is unclaimed, you can claim it and start receiving paid pings.
+            If a handle is unclaimed, you can claim it (x402 + Solana payment) and start receiving
+            paid pings.
           </p>
           <div className="flex flex-wrap gap-2">
             <Button asChild variant="outline" size="sm">

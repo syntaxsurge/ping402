@@ -202,7 +202,8 @@ export function HandleSearch({
             <Separator />
             <div className="flex flex-col gap-2 px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
               <p className="text-xs text-muted-foreground">
-                Claiming requires a Solana wallet signature (no SOL transfer).
+                Claiming requires a Solana wallet signature and triggers an x402 (HTTP 402)
+                payment on Solana for new handles.
               </p>
               <div className="flex flex-wrap gap-2">
                 <Button asChild size="sm" variant="ghost">
@@ -219,4 +220,3 @@ export function HandleSearch({
     </Card>
   );
 }
-

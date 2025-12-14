@@ -1,11 +1,10 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { useSearchParams } from "next/navigation";
 import { useWallet } from "@solana/wallet-adapter-react";
 import { toast } from "sonner";
 
-import { SolanaProvider } from "@/components/solana/SolanaProvider";
 import { WalletConnectButton } from "@/components/solana/WalletConnectButton";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -31,10 +30,19 @@ function shortAddress(address: string) {
 }
 
 function OwnerSignInInner() {
-  const router = useRouter();
   const params = useSearchParams();
   const { publicKey, signMessage } = useWallet();
   const [loading, setLoading] = useState(false);
+  const formRef = useRef<HTMLFormElement | null>(null);
+  const [pendingForm, setPendingForm] = useState<{
+    publicKey: string;
+    signatureB64: string;
+    nonce: string;
+    issuedAt: string;
+    handle: string;
+    displayName?: string;
+    bio?: string;
+  } | null>(null);
 
   const initialHandle = useMemo(() => normalizeHandle(params.get("handle") ?? ""), [params]);
   const [handleInput, setHandleInput] = useState(initialHandle);
@@ -42,8 +50,55 @@ function OwnerSignInInner() {
   const [displayName, setDisplayName] = useState("");
   const [bio, setBio] = useState("");
   const [lookup, setLookup] = useState<LookupState>({ state: "idle" });
+  const errorCode = useMemo(() => params.get("error"), [params]);
 
   const pubkeyBase58 = useMemo(() => publicKey?.toBase58() ?? null, [publicKey]);
+
+  useEffect(() => {
+    if (!pendingForm) return;
+    formRef.current?.requestSubmit();
+  }, [pendingForm]);
+
+  useEffect(() => {
+    if (!errorCode) return;
+    if (errorCode === "HANDLE_TAKEN") {
+      toast.error("That handle is owned by a different wallet.");
+      return;
+    }
+    if (errorCode === "INVALID_HANDLE") {
+      toast.error("Handle must be 3–32 chars: letters, numbers, underscores, hyphens.");
+      return;
+    }
+    if (errorCode === "INVALID_DISPLAY_NAME") {
+      toast.error("Display name must be at least 2 characters.");
+      return;
+    }
+    if (errorCode === "INVALID_SIGNATURE") {
+      toast.error("Signature verification failed. Please try again.");
+      return;
+    }
+    if (errorCode === "NONCE_EXPIRED" || errorCode === "NONCE_NOT_FOUND") {
+      toast.error("Sign-in nonce expired. Please try again.");
+      return;
+    }
+    if (errorCode === "RATE_LIMITED") {
+      toast.error("Too many attempts. Please wait a moment and try again.");
+      return;
+    }
+    if (errorCode === "PAYMENT_PAYER_MISMATCH") {
+      toast.error("The wallet that paid did not match the wallet that signed in.");
+      return;
+    }
+    if (errorCode === "INVALID_X_PAYMENT") {
+      toast.error("Invalid x402 payment proof. Please try again.");
+      return;
+    }
+    if (errorCode === "SERVER_NOT_CONFIGURED") {
+      toast.error("Server is missing claim payment configuration.");
+      return;
+    }
+    toast.error("Sign-in failed. Please try again.");
+  }, [errorCode]);
 
   useEffect(() => {
     const h = normalizedHandle;
@@ -137,36 +192,19 @@ function OwnerSignInInner() {
       const encoded = new TextEncoder().encode(message);
       const sig = await signMessage(encoded);
 
-      const verifyRes = await fetch("/api/auth/verify", {
-        method: "POST",
-        headers: { "content-type": "application/json" },
-        body: JSON.stringify({
+      const signatureB64 = btoa(String.fromCharCode(...sig));
+      setPendingForm({
           publicKey: pubkeyBase58,
-          signature: Array.from(sig),
+          signatureB64,
           nonce,
           issuedAt,
           handle: normalizedHandle,
           displayName: displayName.trim() || undefined,
           bio: bio.trim() || undefined,
-        }),
       });
-
-      if (!verifyRes.ok) {
-        const err = await verifyRes.json().catch(() => ({}));
-        throw new Error(err?.error?.code ?? "Sign-in failed");
-      }
-
-      router.push("/dashboard");
-      router.refresh();
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : "Sign-in failed";
-      if (message === "HANDLE_TAKEN") {
-        toast.error("That handle is owned by a different wallet.");
-      } else if (message === "INVALID_HANDLE") {
-        toast.error("Handle must be 3–32 chars: letters, numbers, underscores, hyphens.");
-      } else {
-        toast.error(message);
-      }
+      toast.error(message);
     } finally {
       setLoading(false);
     }
@@ -186,7 +224,7 @@ function OwnerSignInInner() {
         </h1>
         <p className="text-balance text-muted-foreground">
           Pick a handle, connect a Solana wallet, and sign a message (no SOL transfer) to manage
-          your paid inbox.
+          your paid inbox. New handle claims trigger an x402 (HTTP 402) payment on Solana.
         </p>
       </div>
 
@@ -272,7 +310,8 @@ function OwnerSignInInner() {
         <CardHeader className="space-y-2">
           <CardTitle className="text-base">Step 2 · Connect & sign</CardTitle>
           <p className="text-sm text-muted-foreground">
-            Signing creates a 7‑day HttpOnly session cookie. No SOL is transferred.
+            Signing creates a 7‑day HttpOnly session cookie. Claiming a new handle triggers
+            an x402 (HTTP 402) Solana payment before finalizing.
           </p>
         </CardHeader>
         <CardContent className="space-y-4">
@@ -287,10 +326,30 @@ function OwnerSignInInner() {
 
           <Separator />
 
+          {pendingForm ? (
+            <form ref={formRef} action="/api/auth/verify" method="POST">
+              <input type="hidden" name="publicKey" value={pendingForm.publicKey} />
+              <input type="hidden" name="signature" value={pendingForm.signatureB64} />
+              <input type="hidden" name="nonce" value={pendingForm.nonce} />
+              <input type="hidden" name="issuedAt" value={pendingForm.issuedAt} />
+              <input type="hidden" name="handle" value={pendingForm.handle} />
+              {pendingForm.displayName ? (
+                <input type="hidden" name="displayName" value={pendingForm.displayName} />
+              ) : null}
+              {pendingForm.bio ? (
+                <input type="hidden" name="bio" value={pendingForm.bio} />
+              ) : null}
+              <Button type="submit" variant="brand" className="w-full">
+                Continue
+              </Button>
+            </form>
+          ) : null}
+
           <Button
             className="w-full"
             disabled={
               loading ||
+              Boolean(pendingForm) ||
               !pubkeyBase58 ||
               !signMessage ||
               !normalizedHandle ||
@@ -312,10 +371,5 @@ function OwnerSignInInner() {
 }
 
 export default function OwnerSignInClient() {
-  return (
-    <SolanaProvider>
-      <OwnerSignInInner />
-    </SolanaProvider>
-  );
+  return <OwnerSignInInner />;
 }
-

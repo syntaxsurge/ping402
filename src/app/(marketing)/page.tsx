@@ -212,8 +212,9 @@ export default function HomePage() {
             <AccordionTrigger>How do creators sign in?</AccordionTrigger>
             <AccordionContent>
               Creators pick a handle, connect a Solana wallet, and sign a message (no SOL
-              transfer) to claim the handle and create an HttpOnly session cookie. The
-              dashboard and inbox require that session.
+              transfer). New handle claims trigger an x402 (HTTP 402) payment on Solana before
+              the handle is finalized and an HttpOnly session cookie is set. The dashboard and
+              inbox require that session.
             </AccordionContent>
           </AccordionItem>
           <AccordionItem value="realtime">
@@ -264,4 +265,3 @@ export default function HomePage() {
     </div>
   );
 }
-

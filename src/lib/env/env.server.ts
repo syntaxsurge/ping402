@@ -26,6 +26,7 @@ const ServerEnvSchema = z.object({
   CDP_API_KEY_SECRET: OptionalNonEmptyString.pipe(z.string().min(1).optional()),
 
   PING402_JWT_SECRET: z.string().min(32),
+  PING402_CLAIM_PAY_TO_WALLET: OptionalNonEmptyString.pipe(z.string().min(32).optional()),
 })
 .superRefine((env, ctx) => {
   const needsCdpKeys =

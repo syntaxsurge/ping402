@@ -84,8 +84,9 @@ export default async function UserProfilePage({
               </Button>
             </div>
             <p className="text-xs text-muted-foreground">
-              Claiming requires a Solana wallet signature (no SOL transfer) and creates a
-              creator session cookie to access the dashboard and inbox.
+              Claiming requires a Solana wallet signature and triggers an x402 (HTTP 402)
+              payment on Solana for new handles. After verification, a creator session cookie
+              is set to access the dashboard and inbox.
             </p>
           </CardContent>
         </Card>

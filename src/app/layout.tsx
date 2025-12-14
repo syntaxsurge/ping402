@@ -3,6 +3,7 @@ import { Geist, Geist_Mono } from "next/font/google";
 import "../styles/globals.css";
 import { Toaster } from "sonner";
 import { ThemeProvider } from "@/components/theme/ThemeProvider";
+import { SolanaProvider } from "@/components/solana/SolanaProvider";
 import { siteConfig } from "@/lib/config/site";
 
 const geistSans = Geist({
@@ -39,7 +40,7 @@ export default function RootLayout({
           enableSystem
           disableTransitionOnChange
         >
-          {children}
+          <SolanaProvider>{children}</SolanaProvider>
           <Toaster richColors closeButton />
         </ThemeProvider>
       </body>

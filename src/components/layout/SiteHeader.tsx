@@ -4,6 +4,7 @@ import { Menu } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { ModeToggle } from "@/components/theme/ModeToggle";
+import { WalletHeaderButton } from "@/components/solana/WalletHeaderButton";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 
 export function SiteHeader() {
@@ -40,6 +41,7 @@ export function SiteHeader() {
 
         <div className="flex items-center gap-2">
           <ModeToggle />
+          <WalletHeaderButton />
 
           <Button asChild variant="ghost" size="sm" className="hidden sm:inline-flex">
             <Link href="/owner-signin">Claim a handle</Link>
@@ -76,6 +78,7 @@ export function SiteHeader() {
                   <Button asChild variant="brand">
                     <Link href="/ping">Send a ping</Link>
                   </Button>
+                  <WalletHeaderButton />
                   <Button asChild variant="outline">
                     <Link href="/owner-signin">Claim a handle</Link>
                   </Button>
