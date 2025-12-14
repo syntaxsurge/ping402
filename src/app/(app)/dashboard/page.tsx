@@ -1,18 +1,21 @@
 import Link from "next/link";
+import { redirect } from "next/navigation";
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { getInboxStatsForHandle } from "@/lib/db/convex/server";
-import { getEnvServer } from "@/lib/env/env.server";
 import { formatUsdFromCents } from "@/lib/utils/currency";
 import { ShareLinkCard } from "@/components/data-display/ShareLinkCard";
 import { absoluteUrl } from "@/lib/config/site";
+import { getOwnerSession } from "@/lib/auth/ownerSession";
 
 export const dynamic = "force-dynamic";
 
 export default async function DashboardPage() {
-  const env = getEnvServer();
-  const stats = await getInboxStatsForHandle({ handle: env.PING402_OWNER_HANDLE });
+  const session = await getOwnerSession();
+  if (!session) redirect("/owner-signin");
+
+  const stats = await getInboxStatsForHandle({ handle: session.handle });
 
   const totalMessages = stats?.totalMessages ?? 0;
   const totalRevenueCents = stats?.totalRevenueCents ?? 0;
@@ -20,8 +23,8 @@ export default async function DashboardPage() {
   const repliedCount = stats?.repliedCount ?? 0;
   const archivedCount = stats?.archivedCount ?? 0;
 
-  const shareUrl = absoluteUrl(`/u/${encodeURIComponent(env.PING402_OWNER_HANDLE)}`);
-  const sharePath = `/u/${encodeURIComponent(env.PING402_OWNER_HANDLE)}`;
+  const shareUrl = absoluteUrl(`/u/${encodeURIComponent(session.handle)}`);
+  const sharePath = `/u/${encodeURIComponent(session.handle)}`;
 
   return (
     <div className="space-y-8">
@@ -100,18 +103,18 @@ export default async function DashboardPage() {
       <div className="grid gap-4 lg:grid-cols-2">
         <ShareLinkCard
           url={shareUrl}
-          title={`Share @${env.PING402_OWNER_HANDLE}`}
+          title={`Share @${session.handle}`}
           description="Let anyone send you a paid ping from this URL."
           toastSuccess="Copied share link."
         />
 
         <Card className="bg-card/60 backdrop-blur">
           <CardHeader className="space-y-2">
-            <CardTitle className="text-base">Owner workflow</CardTitle>
-            <p className="text-sm text-muted-foreground">
-              The fastest way to validate the end-to-end flow.
-            </p>
-          </CardHeader>
+          <CardTitle className="text-base">Creator workflow</CardTitle>
+          <p className="text-sm text-muted-foreground">
+            The fastest way to validate the end-to-end flow.
+          </p>
+        </CardHeader>
           <CardContent className="space-y-4 text-sm text-muted-foreground">
             <ol className="list-decimal space-y-2 pl-5">
               <li>Open your public inbox and compose a ping.</li>

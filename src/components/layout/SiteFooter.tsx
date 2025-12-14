@@ -1,10 +1,6 @@
 import Link from "next/link";
 
 export function SiteFooter() {
-  const ownerHandle = (process.env.PING402_OWNER_HANDLE ?? "ping402")
-    .trim()
-    .toLowerCase();
-  const publicHref = `/u/${encodeURIComponent(ownerHandle)}`;
   const year = new Date().getFullYear();
 
   return (
@@ -51,11 +47,11 @@ export function SiteFooter() {
         <div className="space-y-3">
           <div className="text-sm font-semibold">Creators</div>
           <div className="grid gap-2 text-sm">
-            <Link className="text-muted-foreground hover:text-foreground" href={publicHref}>
-              Public inbox
+            <Link className="text-muted-foreground hover:text-foreground" href="/ping">
+              Send a ping
             </Link>
             <Link className="text-muted-foreground hover:text-foreground" href="/owner-signin">
-              Creator sign-in
+              Claim a handle
             </Link>
             <Link className="text-muted-foreground hover:text-foreground" href="/api/health">
               Health check
@@ -79,4 +75,3 @@ export function SiteFooter() {
     </footer>
   );
 }
-

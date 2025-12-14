@@ -48,7 +48,7 @@ export function AppHeader({
           </span>
           <span>ping402</span>
           <Badge variant="outline" className="hidden sm:inline-flex">
-            owner
+            creator
           </Badge>
         </Link>
 
@@ -91,7 +91,7 @@ export function AppHeader({
             <SheetContent side="right" className="w-[320px] sm:w-[360px]">
               <div className="space-y-6 pt-6">
                 <div className="space-y-1">
-                  <div className="text-sm font-semibold">Owner workspace</div>
+                  <div className="text-sm font-semibold">Creator workspace</div>
                   <p className="text-sm text-muted-foreground">
                     Signed in as{" "}
                     <span className="font-mono">{shortAddress(walletPubkey)}</span>

@@ -12,6 +12,7 @@ import { formatUsdFromCents } from "@/lib/utils/currency";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { parseHandle } from "@/lib/utils/handles";
 
 export const dynamic = "force-dynamic";
 
@@ -21,13 +22,14 @@ export async function generateMetadata({
   params: Promise<{ handle: string }>;
 }): Promise<Metadata> {
   const { handle } = await params;
-  const decodedHandle = decodeURIComponent(handle).trim().toLowerCase();
+  const decoded = decodeURIComponent(handle);
+  const decodedHandle = parseHandle(decoded) ?? decoded.trim().toLowerCase();
   const canonical = absoluteUrl(`/u/${encodeURIComponent(decodedHandle)}`);
   const title = `@${decodedHandle} | ${siteConfig.name}`;
 
   return {
     title,
-    description: `Send a paid ping to @${decodedHandle} via Solana x402.`,
+    description: `Send a paid ping to @${decodedHandle} via Solana x402, or claim this handle to receive paid pings.`,
     alternates: { canonical },
     openGraph: {
       title,
@@ -48,9 +50,55 @@ export default async function UserProfilePage({
   const { sent, tx } = await searchParams;
 
   const decodedHandle = decodeURIComponent(handle);
-  const profile = await getProfileByHandle(decodedHandle);
+  const normalizedHandle = parseHandle(decodedHandle);
+  if (!normalizedHandle) notFound();
 
-  if (!profile) notFound();
+  const profile = await getProfileByHandle(normalizedHandle);
+
+  if (!profile) {
+    const claimHref = `/owner-signin?handle=${encodeURIComponent(normalizedHandle)}`;
+    const shareUrl = absoluteUrl(`/u/${encodeURIComponent(normalizedHandle)}`);
+
+    return (
+      <div className="mx-auto max-w-2xl space-y-6">
+        <Card className="bg-card/60 backdrop-blur">
+          <CardHeader className="space-y-2">
+            <div className="flex items-center justify-between gap-4">
+              <CardTitle className="truncate">@{normalizedHandle}</CardTitle>
+              <Badge variant="outline">unclaimed</Badge>
+            </div>
+            <p className="text-sm text-muted-foreground">
+              This handle hasn’t been claimed yet. Claim it to receive paid pings.
+            </p>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="flex flex-wrap gap-2">
+              <Button asChild variant="brand">
+                <Link href={claimHref}>Claim @{normalizedHandle}</Link>
+              </Button>
+              <Button asChild variant="outline">
+                <Link href="/ping">Find a creator</Link>
+              </Button>
+              <Button asChild variant="ghost">
+                <Link href="/how-it-works">How it works</Link>
+              </Button>
+            </div>
+            <p className="text-xs text-muted-foreground">
+              Claiming requires a Solana wallet signature (no SOL transfer) and creates a
+              creator session cookie to access the dashboard and inbox.
+            </p>
+          </CardContent>
+        </Card>
+
+        <ShareLinkCard
+          url={shareUrl}
+          title={`Share @${normalizedHandle}`}
+          description="Share this URL. If the handle is unclaimed, visitors can claim it."
+          toastSuccess="Copied share link."
+        />
+      </div>
+    );
+  }
 
   const [stats, env] = await Promise.all([
     getInboxStatsForHandle({ handle: profile.handle }),

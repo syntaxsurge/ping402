@@ -22,6 +22,7 @@ import {
   listMessagesForHandleByStatus,
   setMessageStatusForHandle,
 } from "@/lib/db/convex/server";
+import { getOwnerSession } from "@/lib/auth/ownerSession";
 import { getEnvServer } from "@/lib/env/env.server";
 import { isSolanaTxSignature, solanaExplorerTxUrl } from "@/lib/solana/explorer";
 import { formatUsdFromCents } from "@/lib/utils/currency";
@@ -53,15 +54,18 @@ export default async function InboxPage({
 }: {
   searchParams: Promise<{ status?: string; cursor?: string }>;
 }) {
+  const session = await getOwnerSession();
+  if (!session) redirect("/owner-signin");
+
   const env = getEnvServer();
   const { status: statusParam, cursor } = await searchParams;
   const status = parseStatus(statusParam);
 
   const [profile, stats, page, hdrs] = await Promise.all([
-    getProfileByHandle(env.PING402_OWNER_HANDLE),
-    getInboxStatsForHandle({ handle: env.PING402_OWNER_HANDLE }),
+    getProfileByHandle(session.handle),
+    getInboxStatsForHandle({ handle: session.handle }),
     listMessagesForHandleByStatus({
-      handle: env.PING402_OWNER_HANDLE,
+      handle: session.handle,
       status,
       cursor: cursor ?? null,
       numItems: 50,
@@ -72,13 +76,14 @@ export default async function InboxPage({
   const messages = page.page;
   const nextCursor = page.continueCursor;
 
-  const sharePath = `/u/${encodeURIComponent(env.PING402_OWNER_HANDLE)}`;
+  const sharePath = `/u/${encodeURIComponent(session.handle)}`;
   const origin = getOriginFromHeaders(hdrs);
   const shareUrl = origin ? `${origin}${sharePath}` : sharePath;
 
   async function setStatus(formData: FormData) {
     "use server";
-    const env = getEnvServer();
+    const session = await getOwnerSession();
+    if (!session) redirect("/owner-signin");
 
     const messageIdRaw = formData.get("messageId");
     const nextStatusRaw = formData.get("nextStatus");
@@ -94,7 +99,7 @@ export default async function InboxPage({
     if (typeof messageIdRaw !== "string" || !nextStatus) return;
 
     await setMessageStatusForHandle({
-      handle: env.PING402_OWNER_HANDLE,
+      handle: session.handle,
       messageId: messageIdRaw as Id<"messages">,
       status: nextStatus,
     });
@@ -118,9 +123,9 @@ export default async function InboxPage({
                 </>
               ) : (
                 <>
-                  Missing owner profile for{" "}
-                  <span className="font-medium">@{env.PING402_OWNER_HANDLE}</span>. Run{" "}
-                  <code className="rounded bg-muted px-1 py-0.5">pnpm seed:owner</code>.
+                  Missing profile for{" "}
+                  <span className="font-medium">@{session.handle}</span>. Re-claim your
+                  handle on <Link className="underline underline-offset-4" href="/owner-signin">/owner-signin</Link>.
                 </>
               )}
             </p>

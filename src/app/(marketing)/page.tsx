@@ -1,30 +1,24 @@
 import Link from "next/link";
 
-import { HandleLookup } from "@/components/marketing/HandleLookup";
+import { HandleSearch } from "@/components/marketing/HandleSearch";
 import { InboxPreviewCard } from "@/components/marketing/InboxPreviewCard";
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
-import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { getPingTierConfig, PING_TIER_ORDER } from "@/lib/ping/tiers";
 
 export default function HomePage() {
-  const ownerHandle = (process.env.PING402_OWNER_HANDLE ?? "ping402")
-    .trim()
-    .toLowerCase();
-
-  const inboxHref = `/u/${encodeURIComponent(ownerHandle)}`;
-
   return (
     <div className="space-y-24">
       <section className="pt-6">
-        <div className="grid items-start gap-10 lg:grid-cols-2 lg:items-center">
+        <div className="grid items-start gap-10 lg:grid-cols-2 lg:items-start">
           <div className="space-y-6 animate-in fade-in-0 slide-in-from-bottom-4 duration-700">
             <div className="flex flex-wrap gap-2">
               <Badge variant="secondary">HTTP 402 · x402</Badge>
               <Badge variant="secondary">Solana settlement</Badge>
-              <Badge variant="secondary">Realtime inbox</Badge>
+              <Badge variant="secondary">Claimable handles</Badge>
             </div>
 
             <div className="space-y-3">
@@ -32,40 +26,29 @@ export default function HomePage() {
                 Paid pings that get answered.
               </h1>
               <p className="text-balance text-base text-muted-foreground sm:text-lg">
-                ping402 turns “send a message” into a single, verifiable action.
-                If you want priority attention, you pay. If you pay, your ping
-                is delivered—no subscriptions, no spam, no guesswork.
+                ping402 turns “send a message” into a single, verifiable action. If you want
+                priority attention, you pay. If you pay, your ping is delivered—no
+                subscriptions, no spam, no guesswork.
               </p>
             </div>
 
             <div className="flex flex-wrap gap-3">
               <Button asChild variant="brand" size="lg">
-                <Link href={inboxHref}>Send a ping</Link>
+                <Link href="/ping">Send a ping</Link>
               </Button>
               <Button asChild variant="outline" size="lg">
                 <Link href="/how-it-works">How it works</Link>
               </Button>
               <Button asChild variant="ghost" size="lg">
-                <Link href="/owner-signin">Creator sign-in</Link>
+                <Link href="/owner-signin">Claim a handle</Link>
               </Button>
             </div>
 
-            <div className="rounded-xl border bg-card/60 p-4 backdrop-blur">
-              <div className="text-sm font-medium">Find a creator</div>
-              <p className="mt-1 text-sm text-muted-foreground">
-                Open a public inbox by handle and send a paid ping.
-              </p>
-              <div className="mt-4">
-                <HandleLookup defaultHandle={ownerHandle} />
-              </div>
-              <p className="mt-2 text-xs text-muted-foreground">
-                No account needed to send. Payment only triggers when required.
-              </p>
-            </div>
+            <HandleSearch />
           </div>
 
           <div className="animate-in fade-in-0 zoom-in-95 duration-700 lg:justify-self-end">
-            <InboxPreviewCard ownerHandle={ownerHandle} />
+            <InboxPreviewCard />
           </div>
         </div>
       </section>
@@ -103,8 +86,8 @@ export default function HomePage() {
               <CardTitle className="text-base">3) Pay, then deliver</CardTitle>
               <p className="text-sm text-muted-foreground">
                 The ping endpoint responds with HTTP 402 until it receives an{" "}
-                <code className="rounded bg-muted px-1 py-0.5">X-PAYMENT</code>{" "}
-                proof for the Solana transaction.
+                <code className="rounded bg-muted px-1 py-0.5">X-PAYMENT</code> proof for a
+                Solana transaction.
               </p>
             </CardHeader>
           </Card>
@@ -124,8 +107,7 @@ export default function HomePage() {
             <CardHeader className="space-y-2">
               <CardTitle className="text-base">Founder inbox</CardTitle>
               <p className="text-sm text-muted-foreground">
-                Filter inbound intros and requests without losing legitimate
-                opportunities.
+                Filter inbound intros and requests without losing legitimate opportunities.
               </p>
             </CardHeader>
           </Card>
@@ -141,8 +123,7 @@ export default function HomePage() {
             <CardHeader className="space-y-2">
               <CardTitle className="text-base">Security & on-call</CardTitle>
               <p className="text-sm text-muted-foreground">
-                Route high-signal issues to the top while leaving room for normal
-                messages.
+                Route high-signal issues to the top while leaving room for normal messages.
               </p>
             </CardHeader>
           </Card>
@@ -150,8 +131,7 @@ export default function HomePage() {
             <CardHeader className="space-y-2">
               <CardTitle className="text-base">API-first workflows</CardTitle>
               <p className="text-sm text-muted-foreground">
-                HTTP-native paywalls let agents and tools pay, retry, and deliver
-                automatically.
+                HTTP-native paywalls let agents and tools pay, retry, and deliver automatically.
               </p>
             </CardHeader>
           </Card>
@@ -169,7 +149,7 @@ export default function HomePage() {
         <div className="grid gap-4 md:grid-cols-3">
           {PING_TIER_ORDER.map((tier) => {
             const meta = getPingTierConfig(tier);
-            const href = `/ping/${encodeURIComponent(tier)}?to=${encodeURIComponent(ownerHandle)}`;
+            const variant = tier === "vip" ? "brand" : tier === "priority" ? "default" : "outline";
 
             return (
               <Card key={tier} className="bg-card/60 backdrop-blur">
@@ -181,12 +161,8 @@ export default function HomePage() {
                   <p className="text-sm text-muted-foreground">{meta.description}</p>
                 </CardHeader>
                 <CardContent>
-                  <Button
-                    asChild
-                    variant={tier === "vip" ? "brand" : "outline"}
-                    className="w-full"
-                  >
-                    <Link href={href}>Compose</Link>
+                  <Button asChild variant={variant} className="w-full">
+                    <Link href="/ping">Choose a creator</Link>
                   </Button>
                 </CardContent>
               </Card>
@@ -218,52 +194,49 @@ export default function HomePage() {
           <AccordionItem value="wallet">
             <AccordionTrigger>Do senders need a wallet?</AccordionTrigger>
             <AccordionContent>
-              A wallet is only needed when the ping endpoint requires payment.
-              If a request hits an HTTP 402 paywall, the sender pays on Solana
-              and the request retries with proof.
+              A wallet is only needed when the ping endpoint requires payment. If a request
+              hits an HTTP 402 paywall, the sender pays on Solana and the request retries with
+              proof.
             </AccordionContent>
           </AccordionItem>
           <AccordionItem value="x402">
             <AccordionTrigger>What is x402?</AccordionTrigger>
             <AccordionContent>
               x402 is an HTTP-native payment flow: a server can respond with{" "}
-              <strong>402 Payment Required</strong> and payment requirements. A
-              client (or UI) pays, then retries the request with an{" "}
-              <code className="rounded bg-muted px-1 py-0.5">X-PAYMENT</code>{" "}
-              proof.
+              <strong>402 Payment Required</strong> and payment requirements. A client (or UI)
+              pays, then retries the request with an{" "}
+              <code className="rounded bg-muted px-1 py-0.5">X-PAYMENT</code> proof.
             </AccordionContent>
           </AccordionItem>
           <AccordionItem value="creator-signin">
             <AccordionTrigger>How do creators sign in?</AccordionTrigger>
             <AccordionContent>
-              Creators connect their owner wallet and sign a message (no gas) to
-              create an HttpOnly session cookie. The inbox and dashboard require
-              that session.
+              Creators pick a handle, connect a Solana wallet, and sign a message (no SOL
+              transfer) to claim the handle and create an HttpOnly session cookie. The
+              dashboard and inbox require that session.
             </AccordionContent>
           </AccordionItem>
           <AccordionItem value="realtime">
             <AccordionTrigger>Are messages realtime?</AccordionTrigger>
             <AccordionContent>
-              Messages and stats are stored in Convex so the inbox updates
-              quickly and reliably without polling-heavy client code.
+              Messages and stats are stored in Convex so the inbox updates quickly and reliably
+              without polling-heavy client code.
             </AccordionContent>
           </AccordionItem>
           <AccordionItem value="mainnet">
             <AccordionTrigger>Devnet or mainnet?</AccordionTrigger>
             <AccordionContent>
               The app supports both; choose{" "}
-              <code className="rounded bg-muted px-1 py-0.5">solana-devnet</code>{" "}
-              or{" "}
-              <code className="rounded bg-muted px-1 py-0.5">solana</code>{" "}
-              via environment configuration.
+              <code className="rounded bg-muted px-1 py-0.5">solana-devnet</code> or{" "}
+              <code className="rounded bg-muted px-1 py-0.5">solana</code> via environment
+              configuration.
             </AccordionContent>
           </AccordionItem>
           <AccordionItem value="spam">
             <AccordionTrigger>What prevents spam?</AccordionTrigger>
             <AccordionContent>
-              Payment is the filter. When sending a ping costs money, low-effort
-              spam becomes economically irrational—while high-intent requests
-              still go through.
+              Payment is the filter. When sending a ping costs money, low-effort spam becomes
+              economically irrational—while high-intent requests still go through.
             </AccordionContent>
           </AccordionItem>
         </Accordion>
@@ -272,20 +245,18 @@ export default function HomePage() {
       <section className="rounded-xl border bg-card/60 p-8 backdrop-blur">
         <div className="flex flex-col gap-6 md:flex-row md:items-center md:justify-between">
           <div className="space-y-2">
-            <h2 className="text-xl font-semibold tracking-tight">
-              Ready to try a paid ping?
-            </h2>
+            <h2 className="text-xl font-semibold tracking-tight">Ready to get started?</h2>
             <p className="text-sm text-muted-foreground">
-              Send a message to <span className="font-medium">@{ownerHandle}</span>{" "}
-              and see the full x402 flow end-to-end.
+              Find a creator inbox to send a paid ping, or claim your handle to start receiving
+              them.
             </p>
           </div>
           <div className="flex flex-wrap gap-3">
             <Button asChild variant="brand">
-              <Link href={inboxHref}>Open @{ownerHandle}</Link>
+              <Link href="/ping">Send a ping</Link>
             </Button>
             <Button asChild variant="outline">
-              <Link href="/how-it-works">Read how it works</Link>
+              <Link href="/owner-signin">Claim a handle</Link>
             </Button>
           </div>
         </div>
@@ -293,3 +264,4 @@ export default function HomePage() {
     </div>
   );
 }
+

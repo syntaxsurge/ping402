@@ -11,6 +11,7 @@ export default defineSchema({
     ownerWallet: v.string(),
     bio: v.optional(v.string()),
     createdAt: v.number(),
+    updatedAt: v.optional(v.number()),
   })
     .index("by_handle", ["handle"])
     .index("by_ownerWallet", ["ownerWallet"]),

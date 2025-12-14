@@ -14,14 +14,10 @@ export default async function AppLayout({ children }: { children: ReactNode }) {
     redirect("/");
   }
 
-  const ownerHandle = (process.env.PING402_OWNER_HANDLE ?? "ping402")
-    .trim()
-    .toLowerCase();
-
   return (
     <div className="min-h-dvh bg-background [background-image:var(--brand-glow)] bg-no-repeat [background-position:top]">
       <AppHeader
-        ownerHandle={ownerHandle}
+        ownerHandle={session.handle}
         walletPubkey={session.walletPubkey}
         signOutAction={signOut}
       />

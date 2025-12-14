@@ -351,8 +351,6 @@ Select **one** backend stack (Drizzle+Supabase or Convex) per project by default
 - Convex deploy: `pnpm convex:deploy`
 - Convex redeploy: `pnpm convex:redeploy`
 - Convex reset: `pnpm convex:reset`
-- Seed owner profile: `pnpm seed:owner`
-- Seed demo messages: `pnpm seed:demo`
 - Lint: `pnpm lint`
 - Lint (fix): `pnpm lint:fix`
 - Lint all: `pnpm lint:all`
@@ -365,17 +363,20 @@ Select **one** backend stack (Drizzle+Supabase or Convex) per project by default
 
 - `GET /` — marketing landing page
 - `GET /how-it-works` — end-to-end x402 flow explanation
+- `GET /ping` — handle search + send/claim entrypoint
 - `GET /u/[handle]` — public inbox profile page
 - `GET /u/[handle]/opengraph-image` — dynamic OpenGraph image for profile sharing
 - `GET /ping/[tier]` — compose page (`standard`, `priority`, `vip`) with payment on submit
 - `POST /api/ping/send?tier=[tier]` — x402-paywalled ping delivery endpoint
-- `GET /owner-signin` — owner sign-in (Solana message signature)
-- `GET /dashboard` — owner dashboard (revenue + status counts; requires owner session)
-- `GET /inbox` — owner inbox (requires owner session)
-- `GET /inbox/[messageId]` — message detail + status actions (requires owner session)
+- `GET /owner-signin` — creator handle claim/sign-in (Solana message signature)
+- `GET /dashboard` — creator dashboard (revenue + status counts; requires creator session)
+- `GET /inbox` — creator inbox (requires creator session)
+- `GET /inbox/[messageId]` — message detail + status actions (requires creator session)
 - `GET /api/health` — health check JSON
+- `GET /api/handles/lookup?handle=[handle]` — handle availability lookup (exact match)
+- `GET /api/handles/search?query=[query]` — handle search + suggestions for onboarding UI
 - `POST /api/auth/nonce` — issues a one-time sign-in nonce
-- `POST /api/auth/verify` — verifies signature + sets owner session cookie
+- `POST /api/auth/verify` — verifies signature, claims handle, and sets creator session cookie
 - `POST /api/x402/session-token` — x402 session token endpoint for paywall UI
 - `GET /api/x402/discovery/resources` — facilitator discovery proxy (HTTP resources)
 - `GET /robots.txt` — dynamic robots rules
@@ -386,11 +387,11 @@ Middleware:
 
 ## Architecture Overview
 
-- **Next.js 15 App Router (`src/`)**: UI routes live in `src/app/**` and are organized into route groups: `(marketing)` for public pages, `(auth)` for creator sign-in, and `(app)` for the authenticated owner workspace. Shared UI lives in `src/components/**`.
-- **Convex backend**: `convex/convex.config.ts` installs the `@convex-dev/rate-limiter` component. `convex/schema.ts` defines `profiles`, `messages`, `inboxStats`, and `authNonces`. `messages` store tier/body, payer + receipt (`paymentTxSig`, `xPaymentB64`), x402 metadata (`x402Network`, `x402Scheme`, `x402Version`), status (`new`, `replied`, `archived`), and `priceCents`. `inboxStats` stores per-profile aggregate counts + revenue for the dashboard. `convex/profiles.ts` implements `byHandle` (query) and `upsertOwnerProfile` (mutation). `convex/messages.ts` implements `createPaidForHandle` (mutation), `listForHandleByStatus` (paginated query), `getForHandleById` (query), `getStatsForHandle` (query), and `setStatusForHandle` (mutation). `convex/auth.ts` implements `storeNonce` and `consumeNonce` mutations.
+- **Next.js 15 App Router (`src/`)**: UI routes live in `src/app/**` and are organized into route groups: `(marketing)` for public pages, `(auth)` for creator handle claim/sign-in, and `(app)` for the authenticated creator workspace. Shared UI lives in `src/components/**`.
+- **Convex backend**: `convex/convex.config.ts` installs the `@convex-dev/rate-limiter` component. `convex/schema.ts` defines `profiles`, `messages`, `inboxStats`, and `authNonces`. `profiles` store `handle`, `displayName`, `ownerWallet`, and optional `bio`. `messages` store tier/body, payer + receipt (`paymentTxSig`, `xPaymentB64`), x402 metadata (`x402Network`, `x402Scheme`, `x402Version`), status (`new`, `replied`, `archived`), and `priceCents`. `inboxStats` stores per-profile aggregate counts + revenue for the dashboard. `convex/profiles.ts` implements `byHandle` (query) and `claimHandle` (mutation). `convex/messages.ts` implements `createPaidForHandle` (mutation), `listForHandleByStatus` (paginated query), `getForHandleById` (query), `getStatsForHandle` (query), and `setStatusForHandle` (mutation). `convex/auth.ts` implements `storeNonce` and `consumeNonce` mutations.
 - **Server data layer**: `src/lib/db/convex/server.ts` uses `ConvexHttpClient` to call Convex from Server Components and Server Actions.
-- **x402 + Solana payments**: `src/app/api/ping/send/route.ts` wraps the handler with `withX402` from `x402-next`, publishes `inputSchema`/`outputSchema` metadata for discovery, and extracts `payer` + `paymentTxSig` from the `X-PAYMENT` proof. `src/app/api/x402/session-token/route.ts` exposes the session-token handler used by the optional onramp flow. `src/app/api/x402/discovery/resources/route.ts` proxies the facilitator discovery endpoint for HTTP resources.
-- **Inbox protection**: `src/app/(auth)/owner-signin/page.tsx` signs a message with the owner wallet, `src/app/api/auth/*` verifies it, and `src/app/(app)/layout.tsx` enforces an HttpOnly session cookie via `src/lib/auth/ownerSession.ts` for the owner dashboard and inbox.
+- **x402 + Solana payments**: `src/app/api/ping/send/route.ts` wraps the handler with `withX402` from `x402-next`, sets `payTo` to the recipient profile’s `ownerWallet`, publishes `inputSchema`/`outputSchema` metadata for discovery, and extracts `payer` + `paymentTxSig` from the `X-PAYMENT` proof. `src/app/api/x402/session-token/route.ts` exposes the session-token handler used by the optional onramp flow. `src/app/api/x402/discovery/resources/route.ts` proxies the facilitator discovery endpoint for HTTP resources.
+- **Creator sessions**: `src/app/(auth)/owner-signin/page.tsx` signs a message that includes the selected handle. `src/app/api/auth/*` verifies it, claims the handle in Convex, and sets an HttpOnly session cookie via `src/lib/auth/ownerSession.ts`. `src/app/(app)/layout.tsx` requires that session for the dashboard and inbox.
 - **Site metadata / SEO**: `src/lib/config/site.ts` centralizes the canonical site URL for absolute links used by `src/app/robots.ts`, `src/app/sitemap.ts`, and `src/app/(marketing)/u/[handle]/opengraph-image.tsx`.
-- **Environment variables**: `.env.example` documents required variables; Convex writes `NEXT_PUBLIC_CONVEX_URL` + `CONVEX_DEPLOYMENT` to `.env.local`. `NEXT_PUBLIC_SITE_URL` configures absolute URLs used by metadata routes (falls back to `VERCEL_URL` or `http://localhost:3000`). x402 requires `NEXT_PUBLIC_WALLET_ADDRESS`, `NEXT_PUBLIC_NETWORK` (`solana-devnet` or `solana`), and `NEXT_PUBLIC_FACILITATOR_URL` (testnet or CDP facilitator). `NEXT_PUBLIC_CDP_CLIENT_KEY` plus server-only `CDP_API_KEY_ID` and `CDP_API_KEY_SECRET` enable Coinbase Onramp via `/api/x402/session-token`, and CDP API keys are required when `NEXT_PUBLIC_FACILITATOR_URL` points to the CDP facilitator. The owner session requires `PING402_JWT_SECRET` and the owner profile requires `PING402_OWNER_HANDLE`, `PING402_OWNER_DISPLAY_NAME`, and `PING402_OWNER_BIO`.
+- **Environment variables**: `.env.example` documents required variables; Convex writes `NEXT_PUBLIC_CONVEX_URL` + `CONVEX_DEPLOYMENT` to `.env.local`. `NEXT_PUBLIC_SITE_URL` configures absolute URLs used by metadata routes (falls back to `VERCEL_URL` or `http://localhost:3000`). x402 uses `NEXT_PUBLIC_NETWORK` (`solana-devnet` or `solana`) and `NEXT_PUBLIC_FACILITATOR_URL` (testnet or CDP facilitator). `NEXT_PUBLIC_CDP_CLIENT_KEY` plus server-only `CDP_API_KEY_ID` and `CDP_API_KEY_SECRET` enable Coinbase Onramp via `/api/x402/session-token`, and CDP API keys are required when `NEXT_PUBLIC_FACILITATOR_URL` points to the CDP facilitator. Creator sessions require `PING402_JWT_SECRET`.
 - **Styling / UI**: Tailwind CSS v4 tokens are defined in `src/styles/globals.css` (including brand accents + light/dark CSS variables). Theme switching uses `next-themes` via `src/components/theme/ThemeProvider.tsx`, with `src/components/theme/ModeToggle.tsx` exposed in the header UI. shadcn-style primitives live under `src/components/ui/**`.

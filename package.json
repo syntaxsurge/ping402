@@ -16,9 +16,7 @@
     "convex:dev": "node ./scripts/convex-dev.cjs",
     "convex:deploy": "npx convex deploy -y",
     "convex:redeploy": "pnpm run convex:deploy && pnpm run convex:dev",
-    "convex:reset": "dotenv -e .env -e .env.local -- tsx scripts/reset-convex.ts",
-    "seed:owner": "tsx scripts/seed-owner-profile.ts",
-    "seed:demo": "tsx scripts/seed-demo.ts"
+    "convex:reset": "dotenv -e .env -e .env.local -- tsx scripts/reset-convex.ts"
   },
   "dependencies": {
     "@coinbase/x402": "^2.0.0",

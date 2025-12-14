@@ -16,7 +16,7 @@ export const byHandle = query({
   },
 });
 
-export const upsertOwnerProfile = mutation({
+export const claimHandle = mutation({
   args: {
     handle: v.string(),
     displayName: v.string(),
@@ -48,21 +48,27 @@ export const upsertOwnerProfile = mutation({
       .unique();
 
     if (existing) {
+      if (existing.ownerWallet !== ownerWallet) {
+        throw new ConvexError({ code: "HANDLE_TAKEN" });
+      }
+
+      const now = Date.now();
       await ctx.db.patch(existing._id, {
         displayName,
-        ownerWallet,
         bio,
+        updatedAt: now,
       });
       return existing._id;
     }
 
+    const now = Date.now();
     return await ctx.db.insert("profiles", {
       handle,
       displayName,
       ownerWallet,
       bio,
-      createdAt: Date.now(),
+      createdAt: now,
+      updatedAt: now,
     });
   },
 });
-

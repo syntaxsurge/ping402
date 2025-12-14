@@ -4,8 +4,7 @@ import { ConvexHttpClient } from "convex/browser";
 import { api } from "@convex/_generated/api";
 import type { Id } from "@convex/_generated/dataModel";
 import { getEnvServer } from "@/lib/env/env.server";
-
-const HANDLE_RE = /^[a-z0-9][a-z0-9_-]{2,31}$/;
+import { parseHandle } from "@/lib/utils/handles";
 
 let cachedClient: ConvexHttpClient | undefined;
 
@@ -16,18 +15,18 @@ function getClient(): ConvexHttpClient {
 }
 
 export async function getProfileByHandle(handle: string) {
-  const normalized = handle.trim().toLowerCase();
-  if (!HANDLE_RE.test(normalized)) return null;
+  const normalized = parseHandle(handle);
+  if (!normalized) return null;
   return await getClient().query(api.profiles.byHandle, { handle: normalized });
 }
 
-export async function upsertOwnerProfile(input: {
+export async function claimHandle(input: {
   handle: string;
   displayName: string;
   ownerWallet: string;
   bio?: string;
 }) {
-  return await getClient().mutation(api.profiles.upsertOwnerProfile, input);
+  return await getClient().mutation(api.profiles.claimHandle, input);
 }
 
 export async function createPaidMessageForHandle(input: {

@@ -3,6 +3,7 @@ import "server-only";
 import { cookies } from "next/headers";
 import { jwtVerify, SignJWT } from "jose";
 import { getEnvServer } from "@/lib/env/env.server";
+import { parseHandle } from "@/lib/utils/handles";
 
 const COOKIE_NAME = "ping402_owner";
 const ISSUER = "ping402";
@@ -13,10 +14,10 @@ function getSecret() {
   return new TextEncoder().encode(env.PING402_JWT_SECRET);
 }
 
-export async function setOwnerSession(walletPubkey: string) {
-  const jwt = await new SignJWT({ role: "owner" })
+export async function setOwnerSession(input: { walletPubkey: string; handle: string }) {
+  const jwt = await new SignJWT({ role: "creator", handle: input.handle })
     .setProtectedHeader({ alg: "HS256" })
-    .setSubject(walletPubkey)
+    .setSubject(input.walletPubkey)
     .setIssuer(ISSUER)
     .setAudience(AUDIENCE)
     .setIssuedAt()
@@ -33,7 +34,7 @@ export async function setOwnerSession(walletPubkey: string) {
   });
 }
 
-export async function getOwnerSession(): Promise<{ walletPubkey: string } | null> {
+export async function getOwnerSession(): Promise<{ walletPubkey: string; handle: string } | null> {
   const cookieStore = await cookies();
   const token = cookieStore.get(COOKIE_NAME)?.value;
   if (!token) return null;
@@ -44,10 +45,12 @@ export async function getOwnerSession(): Promise<{ walletPubkey: string } | null
       audience: AUDIENCE,
     });
 
-    const env = getEnvServer();
-    if (payload.sub !== env.NEXT_PUBLIC_WALLET_ADDRESS) return null;
+    if (typeof payload.sub !== "string" || payload.sub.length < 20) return null;
+    if (typeof payload.handle !== "string") return null;
+    const handle = parseHandle(payload.handle);
+    if (!handle) return null;
 
-    return { walletPubkey: payload.sub };
+    return { walletPubkey: payload.sub, handle };
   } catch {
     return null;
   }

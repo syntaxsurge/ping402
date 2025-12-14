@@ -12,6 +12,7 @@ import {
   getMessageForHandleById,
   setMessageStatusForHandle,
 } from "@/lib/db/convex/server";
+import { getOwnerSession } from "@/lib/auth/ownerSession";
 import { getEnvServer } from "@/lib/env/env.server";
 import { isSolanaTxSignature, solanaExplorerTxUrl } from "@/lib/solana/explorer";
 
@@ -39,10 +40,12 @@ export default async function MessageDetailPage({
   params: Promise<{ messageId: string }>;
 }) {
   const { messageId } = await params;
+  const session = await getOwnerSession();
+  if (!session) redirect("/owner-signin");
   const env = getEnvServer();
 
   const message = await getMessageForHandleById({
-    handle: env.PING402_OWNER_HANDLE,
+    handle: session.handle,
     messageId: messageId as Id<"messages">,
   });
 
@@ -50,9 +53,10 @@ export default async function MessageDetailPage({
 
   async function setStatus(nextStatus: "replied" | "archived") {
     "use server";
-    const env = getEnvServer();
+    const session = await getOwnerSession();
+    if (!session) redirect("/owner-signin");
     await setMessageStatusForHandle({
-      handle: env.PING402_OWNER_HANDLE,
+      handle: session.handle,
       messageId: messageId as Id<"messages">,
       status: nextStatus,
     });

@@ -51,9 +51,7 @@ function statusChip(status: PreviewPing["status"]) {
   );
 }
 
-export function InboxPreviewCard({ ownerHandle }: { ownerHandle: string }) {
-  const inboxHref = `/u/${encodeURIComponent(ownerHandle)}`;
-
+export function InboxPreviewCard() {
   return (
     <Card className="overflow-hidden">
       <CardHeader className="space-y-2">
@@ -118,8 +116,8 @@ export function InboxPreviewCard({ ownerHandle }: { ownerHandle: string }) {
         </div>
 
         <Button asChild variant="outline" className="w-full">
-          <Link href={inboxHref} className="flex items-center justify-center gap-2">
-            Open @{ownerHandle}
+          <Link href="/ping" className="flex items-center justify-center gap-2">
+            Find a creator
             <ArrowRight className="h-4 w-4" aria-hidden="true" />
           </Link>
         </Button>
@@ -127,4 +125,3 @@ export function InboxPreviewCard({ ownerHandle }: { ownerHandle: string }) {
     </Card>
   );
 }
-

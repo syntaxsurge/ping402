@@ -1,9 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
-import type { Address } from "viem";
 import { withX402 } from "x402-next";
+import type { SolanaAddress } from "x402-next";
 import { z } from "zod";
 
 import { getEnvServer } from "@/lib/env/env.server";
+import { getProfileByHandle } from "@/lib/db/convex/server";
 import { createPaidMessageForHandle } from "@/lib/db/convex/server";
 import { parseXPaymentHeader } from "@/lib/x402/parseXPayment";
 import { getX402FacilitatorConfig } from "@/lib/x402/facilitator";
@@ -11,6 +12,7 @@ import { logger } from "@/lib/observability/logger";
 import { solanaExplorerTxUrl } from "@/lib/solana/explorer";
 import { getPingTierConfig, PingTierSchema, type PingTier } from "@/lib/ping/tiers";
 import { getErrorCode, getErrorData } from "@/lib/utils/errorData";
+import { parseHandle } from "@/lib/utils/handles";
 
 export const runtime = "nodejs";
 
@@ -26,7 +28,7 @@ function getTierFromUrl(req: NextRequest): PingTier {
   return tier.success ? tier.data : "standard";
 }
 
-async function parseRequestBody(req: NextRequest) {
+async function parseRequestBody(req: Request) {
   const contentType = req.headers.get("content-type") ?? "";
 
   if (contentType.includes("application/json")) {
@@ -173,67 +175,107 @@ const handler = async (req: NextRequest) => {
   }
 };
 
-let cachedPost: ReturnType<typeof withX402> | undefined;
+async function getRecipientHandle(req: NextRequest): Promise<string | null> {
+  const fromQuery = parseHandle(req.nextUrl.searchParams.get("to") ?? "");
+  if (fromQuery) return fromQuery;
 
-function getPaywalledPost() {
-  if (cachedPost) return cachedPost;
+  try {
+    const body = await parseRequestBody(req.clone());
+    return parseHandle(body.to);
+  } catch {
+    return null;
+  }
+}
+
+export async function POST(req: NextRequest) {
+  const requestId = req.headers.get("x-request-id") ?? "unknown";
+  const tier = getTierFromUrl(req);
+
+  const toHandle = await getRecipientHandle(req);
+  if (!toHandle) {
+    const wantsHtml = (req.headers.get("accept") ?? "").includes("text/html");
+    if (wantsHtml) {
+      const redirectUrl = new URL(`/ping/${tier}`, req.nextUrl.origin);
+      redirectUrl.searchParams.set("error", "invalid");
+      return NextResponse.redirect(redirectUrl, 303);
+    }
+
+    return NextResponse.json(
+      { error: { code: "INVALID_RECIPIENT" }, requestId },
+      { status: 400 }
+    );
+  }
+
+  const recipient = await getProfileByHandle(toHandle);
+  if (!recipient) {
+    const wantsHtml = (req.headers.get("accept") ?? "").includes("text/html");
+    if (wantsHtml) {
+      const redirectUrl = new URL(`/ping/${tier}`, req.nextUrl.origin);
+      redirectUrl.searchParams.set("to", toHandle);
+      redirectUrl.searchParams.set("error", "not_found");
+      return NextResponse.redirect(redirectUrl, 303);
+    }
+
+    return NextResponse.json(
+      { error: { code: "RECIPIENT_NOT_FOUND" }, requestId },
+      { status: 404 }
+    );
+  }
 
   const env = getEnvServer();
-  cachedPost = withX402(
-    handler,
-    env.NEXT_PUBLIC_WALLET_ADDRESS as Address,
-    async (req) => {
-      const tier = getTierFromUrl(req);
-      const tierConfig = getPingTierConfig(tier);
+  const tierConfig = getPingTierConfig(tier);
+  const payTo = recipient.ownerWallet as SolanaAddress;
 
-      return {
-        price: tierConfig.priceUsd,
-        network: env.NEXT_PUBLIC_NETWORK,
-        config: {
-          description: `${tierConfig.label} ping: send a paid message to a ping402 inbox`,
-          mimeType: "application/json",
-          maxTimeoutSeconds: 120,
-          discoverable: true,
-          inputSchema: {
-            queryParams: { tier },
-            bodyType: "json",
-            bodyFields: {
-              to: { type: "string", description: "Recipient handle (3-32 chars)." },
-              body: { type: "string", description: "Message body (max 280 chars)." },
-              senderName: { type: "string", description: "Optional display name." },
-              senderContact: {
-                type: "string",
-                description: "Optional contact (email, handle, wallet).",
-              },
+  return withX402(
+    handler,
+    payTo,
+    {
+      price: tierConfig.priceUsd,
+      network: env.NEXT_PUBLIC_NETWORK,
+      config: {
+        description: `${tierConfig.label} ping: send a paid message to a ping402 inbox`,
+        mimeType: "application/json",
+        maxTimeoutSeconds: 120,
+        discoverable: true,
+        inputSchema: {
+          queryParams: { tier, to: toHandle },
+          bodyType: "json",
+          bodyFields: {
+            to: { type: "string", description: "Recipient handle (3-32 chars)." },
+            body: { type: "string", description: "Message body (max 280 chars)." },
+            senderName: { type: "string", description: "Optional display name." },
+            senderContact: {
+              type: "string",
+              description: "Optional contact (email, handle, wallet).",
             },
-          },
-          outputSchema: {
-            type: "object",
-            properties: {
-              ok: { type: "boolean" },
-              messageId: { type: "string" },
-              deduped: { type: "boolean" },
-              tier: { type: "string" },
-              toHandle: { type: "string" },
-              payer: { type: "string" },
-              paymentTxSig: { type: "string" },
-              explorerUrl: { type: "string" },
-              requestId: { type: "string" },
-            },
-            required: [
-              "ok",
-              "messageId",
-              "deduped",
-              "tier",
-              "toHandle",
-              "payer",
-              "paymentTxSig",
-              "explorerUrl",
-              "requestId",
-            ],
           },
         },
-      };
+        outputSchema: {
+          type: "object",
+          properties: {
+            ok: { type: "boolean" },
+            messageId: { type: "string" },
+            deduped: { type: "boolean" },
+            tier: { type: "string" },
+            toHandle: { type: "string" },
+            payer: { type: "string" },
+            paymentTxSig: { type: "string" },
+            explorerUrl: { type: "string" },
+            requestId: { type: "string" },
+          },
+          required: [
+            "ok",
+            "messageId",
+            "deduped",
+            "tier",
+            "toHandle",
+            "payer",
+            "paymentTxSig",
+            "explorerUrl",
+            "requestId",
+          ],
+        },
+      },
     },
     getX402FacilitatorConfig(),
     {
@@ -242,9 +284,5 @@ function getPaywalledPost() {
       appLogo: "/favicon.ico",
       sessionTokenEndpoint: "/api/x402/session-token",
     }
-  );
-
-  return cachedPost;
+  )(req);
 }
-
-export const POST = (req: NextRequest) => getPaywalledPost()(req);

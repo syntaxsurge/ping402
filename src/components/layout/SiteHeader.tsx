@@ -7,17 +7,11 @@ import { ModeToggle } from "@/components/theme/ModeToggle";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 
 export function SiteHeader() {
-  const ownerHandle = (process.env.PING402_OWNER_HANDLE ?? "ping402")
-    .trim()
-    .toLowerCase();
-
   const navLinks = [
     { href: "/how-it-works", label: "How it works" },
     { href: "/#tiers", label: "Tiers" },
     { href: "/#faq", label: "FAQ" },
   ] as const;
-
-  const publicHref = `/u/${encodeURIComponent(ownerHandle)}`;
 
   return (
     <header className="sticky top-0 z-50 border-b bg-background/70 backdrop-blur supports-[backdrop-filter]:bg-background/50">
@@ -48,11 +42,11 @@ export function SiteHeader() {
           <ModeToggle />
 
           <Button asChild variant="ghost" size="sm" className="hidden sm:inline-flex">
-            <Link href="/owner-signin">Creator sign-in</Link>
+            <Link href="/owner-signin">Claim a handle</Link>
           </Button>
 
           <Button asChild variant="brand" size="sm">
-            <Link href={publicHref}>Send a ping</Link>
+            <Link href="/ping">Send a ping</Link>
           </Button>
 
           <Sheet>
@@ -80,10 +74,10 @@ export function SiteHeader() {
 
                 <div className="grid gap-2">
                   <Button asChild variant="brand">
-                    <Link href={publicHref}>Send a ping</Link>
+                    <Link href="/ping">Send a ping</Link>
                   </Button>
                   <Button asChild variant="outline">
-                    <Link href="/owner-signin">Creator sign-in</Link>
+                    <Link href="/owner-signin">Claim a handle</Link>
                   </Button>
                 </div>
               </div>
