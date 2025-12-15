@@ -29,6 +29,7 @@
     "@radix-ui/react-slot": "^1.2.4",
     "@solana/kit": "^2.3.0",
     "@solana/pay": "^0.2.6",
+    "@solana/spl-token": "^0.4.14",
     "@solana/sysvars": "^2.1.0",
     "@solana/wallet-adapter-base": "^0.9.27",
     "@solana/wallet-adapter-phantom": "^0.9.28",

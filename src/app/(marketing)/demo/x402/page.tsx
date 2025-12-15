@@ -14,7 +14,7 @@ export default function X402DemoPage() {
         <p className="text-sm text-muted-foreground">
           If the demo endpoint fails, confirm{" "}
           <code className="rounded bg-muted px-1 py-0.5">PING402_CLAIM_PAY_TO_WALLET</code> is
-          set to a valid Solana address in your environment.
+          set to a valid Solana address (the demo pay-to wallet) in your environment.
         </p>
       </header>
 

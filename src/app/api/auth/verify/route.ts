@@ -1,5 +1,4 @@
 import { NextRequest, NextResponse } from "next/server";
-import { withX402 } from "@x402/next";
 import nacl from "tweetnacl";
 import { PublicKey } from "@solana/web3.js";
 import { z } from "zod";
@@ -11,14 +10,6 @@ import { buildPing402SignInMessage } from "@/lib/solana/siwsMessage";
 import { logger } from "@/lib/observability/logger";
 import { getErrorCode, getErrorData } from "@/lib/utils/errorData";
 import { parseHandle } from "@/lib/utils/handles";
-import { getX402PaywallConfig, getX402PaywallProvider } from "@/lib/x402/paywall";
-import { ClaimHandleInputSchema, ClaimHandleOutputSchema } from "@/lib/x402/discoverySchemas";
-import { declareBazaarBodyDiscoveryExtension } from "@/lib/x402/bazaar";
-import { getX402Server } from "@/lib/x402/server";
-import {
-  getPaymentSignatureHeader,
-  parsePaymentSignatureHeader,
-} from "@/lib/x402/parsePayment";
 
 const BodySchema = z.object({
   publicKey: z.string().min(32),
@@ -34,12 +25,6 @@ const BodySchema = z.object({
 });
 
 export const runtime = "nodejs";
-
-const HANDLE_CLAIM_PRICE_USD = "$0.10" as const;
-
-function resolveClaimPayToWallet(): string {
-  return new PublicKey(getEnvServer().PING402_CLAIM_PAY_TO_WALLET).toBase58();
-}
 
 async function parseRequestBody(req: Request): Promise<z.infer<typeof BodySchema>> {
   const contentType = req.headers.get("content-type") ?? "";
@@ -89,7 +74,7 @@ function decodeSignatureBytes(signature: z.infer<typeof BodySchema>["signature"]
   return new Uint8Array(buf);
 }
 
-async function handler(req: NextRequest, input: { requiresPaymentForClaim: boolean }) {
+async function handler(req: NextRequest) {
   const requestId = req.headers.get("x-request-id") ?? "unknown";
   const wantsHtml = (req.headers.get("accept") ?? "").includes("text/html");
 
@@ -103,29 +88,6 @@ async function handler(req: NextRequest, input: { requiresPaymentForClaim: boole
   const handle = parseHandle(body.handle);
   if (!handle) {
     return responseError(req, { requestId, code: "INVALID_HANDLE", status: 400 });
-  }
-
-  if (input.requiresPaymentForClaim) {
-    const paymentSignature = getPaymentSignatureHeader(req.headers);
-    if (!paymentSignature) {
-      logger.error({ requestId, handle }, "ping402.x402.missing_payment_signature");
-      return responseError(req, { requestId, handle, code: "INTERNAL_ERROR", status: 500 });
-    }
-
-    try {
-      const payment = parsePaymentSignatureHeader(paymentSignature);
-      if (payment.tokenPayer !== body.publicKey) {
-        return responseError(req, {
-          requestId,
-          handle,
-          code: "PAYMENT_PAYER_MISMATCH",
-          status: 403,
-        });
-      }
-    } catch (err: unknown) {
-      logger.error({ requestId, err }, "ping402.auth.parse_payment_signature_failed");
-      return responseError(req, { requestId, handle, code: "INVALID_PAYMENT_SIGNATURE", status: 400 });
-    }
   }
 
   const env = getEnvServer();
@@ -229,47 +191,5 @@ export async function POST(req: NextRequest) {
     return responseError(req, { requestId, handle, code: "HANDLE_TAKEN", status: 403 });
   }
 
-  if (existing) {
-    return handler(req, { requiresPaymentForClaim: false });
-  }
-
-  const payTo = resolveClaimPayToWallet();
-
-  const env = getEnvServer();
-
-  const routeConfig = {
-    accepts: {
-      scheme: "exact",
-      price: HANDLE_CLAIM_PRICE_USD,
-      network: env.X402_NETWORK,
-      payTo,
-      maxTimeoutSeconds: 120,
-    },
-    description: "Claim a ping402 handle (creator onboarding)",
-    mimeType: "text/html",
-    unpaidResponseBody: () => ({
-      contentType: "application/json",
-      body: { error: { code: "PAYMENT_REQUIRED" }, requestId },
-    }),
-    extensions: {
-      ...declareBazaarBodyDiscoveryExtension({
-        bodyType: "json",
-        inputSchema: ClaimHandleInputSchema,
-        output: {
-          example: { ok: true, requestId },
-          schema: ClaimHandleOutputSchema,
-        },
-      }),
-    },
-  } as const;
-
-  const protectedPost = withX402(
-    (nextReq) => handler(nextReq, { requiresPaymentForClaim: true }),
-    routeConfig,
-    getX402Server(),
-    getX402PaywallConfig(),
-    getX402PaywallProvider(),
-  );
-
-  return protectedPost(req);
+  return handler(req);
 }

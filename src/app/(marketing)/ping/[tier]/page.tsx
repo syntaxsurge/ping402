@@ -6,12 +6,9 @@ import { getEnvServer } from "@/lib/env/env.server";
 import { getPingTierConfig, PingTierSchema, type PingTier } from "@/lib/ping/tiers";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
 import { FundingCta } from "@/components/x402/FundingCta";
 import { PaymentSummaryCard } from "@/components/x402/PaymentSummaryCard";
-import { SolanaPayPingSheet } from "@/components/solana-pay/SolanaPayPingSheet";
+import { PingComposeFormClient } from "@/app/(marketing)/ping/[tier]/PingComposeFormClient";
 
 export const dynamic = "force-dynamic";
 
@@ -34,7 +31,6 @@ export default async function PingComposePage({
 
   const meta = getPingTierConfig(tier);
   const backHref = toHandle ? `/u/${encodeURIComponent(toHandle)}` : "/";
-  const actionHref = `/api/ping/send?tier=${encodeURIComponent(tier)}&to=${encodeURIComponent(toHandle)}`;
   const env = getEnvServer();
 
   return (
@@ -60,73 +56,23 @@ export default async function PingComposePage({
                   To <span className="font-semibold">{recipient.displayName}</span>{" "}
                   <span className="text-muted-foreground">@{recipient.handle}</span>
                 </>
-              ) : toHandle ? (
-                <>
-                  Recipient <span className="font-semibold">@{toHandle}</span> not found
-                </>
-              ) : (
-                <>Missing recipient</>
-              )}
-            </CardTitle>
-            {error ? (
-              <p className="text-sm text-destructive">
-                Please check the form and try again.
-              </p>
-            ) : null}
+            ) : toHandle ? (
+              <>
+                Recipient <span className="font-semibold">@{toHandle}</span> not found
+              </>
+            ) : (
+              <>Missing recipient</>
+            )}
+          </CardTitle>
           </CardHeader>
 
           <CardContent>
-            {!toHandle ? (
-              <p className="text-sm text-muted-foreground">
-                Go to a profile page and pick a tier to start.
-              </p>
-            ) : (
-              <form id="ping-compose-form" action={actionHref} method="POST" className="space-y-4">
-                <input type="hidden" name="to" value={toHandle} />
-
-                <div className="space-y-2">
-                  <Label htmlFor="senderName">Your name (optional)</Label>
-                  <Input id="senderName" name="senderName" placeholder="e.g. Alex" />
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="senderContact">Contact (optional)</Label>
-                  <Input
-                    id="senderContact"
-                    name="senderContact"
-                    placeholder="e.g. @alex or email"
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="body">Message</Label>
-                  <Textarea
-                    id="body"
-                    name="body"
-                    placeholder="Write your ping…"
-                    required
-                    maxLength={280}
-                  />
-                </div>
-
-                <div className="flex flex-col gap-2 sm:flex-row">
-                  <Button type="submit" disabled={!recipient} className="sm:flex-1">
-                    Pay & send ping
-                  </Button>
-                  <SolanaPayPingSheet
-                    formId="ping-compose-form"
-                    toHandle={toHandle}
-                    tier={tier}
-                    disabled={!recipient}
-                  />
-                </div>
-
-                <p className="text-xs text-muted-foreground">
-                  Submitting this form triggers an x402 (HTTP 402 Payment Required) paywall on
-                  Solana and delivers your message after payment.
-                </p>
-              </form>
-            )}
+            <PingComposeFormClient
+              toHandle={toHandle}
+              tier={tier}
+              recipient={recipient ? { handle: recipient.handle, displayName: recipient.displayName } : null}
+              error={error}
+            />
           </CardContent>
         </Card>
 

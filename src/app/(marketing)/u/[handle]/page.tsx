@@ -29,7 +29,7 @@ export async function generateMetadata({
 
   return {
     title,
-    description: `Send a paid ping to @${decodedHandle} via Solana x402, or claim this handle to receive paid pings.`,
+    description: `Send a paid ping to @${decodedHandle} via Solana x402, or claim this handle for free to receive paid pings.`,
     alternates: { canonical },
     openGraph: {
       title,
@@ -84,9 +84,8 @@ export default async function UserProfilePage({
               </Button>
             </div>
             <p className="text-xs text-muted-foreground">
-              Claiming requires a Solana wallet signature and triggers an x402 (HTTP 402)
-              payment on Solana for new handles. After verification, a creator session cookie
-              is set to access the dashboard and inbox.
+              Claiming requires a Solana wallet signature (no SOL transfer). After verification,
+              a creator session cookie is set to access the dashboard and inbox.
             </p>
           </CardContent>
         </Card>
@@ -194,8 +193,7 @@ export default async function UserProfilePage({
           })}
         </div>
         <p className="text-xs text-muted-foreground">
-          Submitting a ping triggers an x402 (HTTP 402 Payment Required) paywall on
-          Solana.{" "}
+          Sending a ping requires an x402-priced Solana payment.{" "}
           <Link className="underline underline-offset-4" href="/how-it-works">
             Learn how it works
           </Link>

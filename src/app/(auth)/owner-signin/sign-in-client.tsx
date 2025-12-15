@@ -85,14 +85,6 @@ function OwnerSignInInner() {
       toast.error("Too many attempts. Please wait a moment and try again.");
       return;
     }
-    if (errorCode === "PAYMENT_PAYER_MISMATCH") {
-      toast.error("The wallet that paid did not match the wallet that signed in.");
-      return;
-    }
-    if (errorCode === "INVALID_PAYMENT_SIGNATURE") {
-      toast.error("Invalid x402 payment proof. Please try again.");
-      return;
-    }
     toast.error("Sign-in failed. Please try again.");
   }, [errorCode]);
 
@@ -220,7 +212,8 @@ function OwnerSignInInner() {
         </h1>
         <p className="text-balance text-muted-foreground">
           Pick a handle, connect a Solana wallet, and sign a message (no SOL transfer) to manage
-          your paid inbox. New handle claims trigger an x402 (HTTP 402) payment on Solana.
+          your paid inbox. Handle claims are free — payments only happen when someone sends you a
+          ping.
         </p>
       </div>
 
@@ -306,8 +299,7 @@ function OwnerSignInInner() {
         <CardHeader className="space-y-2">
           <CardTitle className="text-base">Step 2 · Connect & sign</CardTitle>
           <p className="text-sm text-muted-foreground">
-            Signing creates a 7‑day HttpOnly session cookie. Claiming a new handle triggers
-            an x402 (HTTP 402) Solana payment before finalizing.
+            Signing creates a 7‑day HttpOnly session cookie. This step does not move funds.
           </p>
         </CardHeader>
         <CardContent className="space-y-4">
