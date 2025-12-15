@@ -16,7 +16,6 @@ import {
   Search,
   Sparkles,
   SquareArrowOutUpRight,
-  Unplug,
   Wallet,
 } from "lucide-react";
 import { useWallet } from "@solana/wallet-adapter-react";
@@ -580,17 +579,6 @@ export function UnifiedHeaderClient({ session }: { session: Session }) {
                   <Wallet className="h-4 w-4" aria-hidden="true" />
                   {connected ? "Change wallet" : "Connect wallet"}
                 </DropdownMenuItem>
-
-                {connected ? (
-                  <DropdownMenuItem
-                    className="cursor-pointer"
-                    disabled={signingOut}
-                    onClick={() => void runSignOut({ disconnectWallet: true })}
-                  >
-                    <Unplug className="h-4 w-4" aria-hidden="true" />
-                    Disconnect wallet
-                  </DropdownMenuItem>
-                ) : null}
 
                 <DropdownMenuItem
                   className="cursor-pointer"
