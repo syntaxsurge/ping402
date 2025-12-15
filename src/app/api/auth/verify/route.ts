@@ -12,6 +12,8 @@ import { logger } from "@/lib/observability/logger";
 import { getErrorCode, getErrorData } from "@/lib/utils/errorData";
 import { parseHandle } from "@/lib/utils/handles";
 import { getX402PaywallConfig, getX402PaywallProvider } from "@/lib/x402/paywall";
+import { ClaimHandleInputSchema, ClaimHandleOutputSchema } from "@/lib/x402/discoverySchemas";
+import { declareBazaarBodyDiscoveryExtension } from "@/lib/x402/bazaar";
 import { getX402Server } from "@/lib/x402/server";
 import {
   getPaymentSignatureHeader,
@@ -249,6 +251,25 @@ export async function POST(req: NextRequest) {
       contentType: "application/json",
       body: { error: { code: "PAYMENT_REQUIRED" }, requestId },
     }),
+    extensions: {
+      ...declareBazaarBodyDiscoveryExtension({
+        bodyType: "json",
+        input: {
+          publicKey: "11111111111111111111111111111111",
+          signature: "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==",
+          nonce: "ping402-nonce-example",
+          issuedAt: "2025-12-15T00:00:00.000Z",
+          handle,
+          displayName: handle,
+          bio: "Paid inbox on Solana.",
+        },
+        inputSchema: ClaimHandleInputSchema,
+        output: {
+          example: { ok: true, requestId },
+          schema: ClaimHandleOutputSchema,
+        },
+      }),
+    },
   } as const;
 
   const protectedPost = withX402(

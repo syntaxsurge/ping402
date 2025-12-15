@@ -1,8 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
 import { withX402 } from "@x402/next";
+import { declareDiscoveryExtension } from "@x402/extensions/bazaar";
 import { PublicKey } from "@solana/web3.js";
 
 import { getEnvServer } from "@/lib/env/env.server";
+import { X402DemoOutputSchema } from "@/lib/x402/discoverySchemas";
 import { getX402PaywallConfig, getX402PaywallProvider } from "@/lib/x402/paywall";
 import { getX402Server } from "@/lib/x402/server";
 
@@ -44,6 +46,18 @@ export async function GET(req: NextRequest) {
       contentType: "application/json",
       body: { error: { code: "PAYMENT_REQUIRED" }, requestId },
     }),
+    extensions: {
+      ...declareDiscoveryExtension({
+        output: {
+          example: {
+            ok: true,
+            requestId,
+            message: "x402 demo resource unlocked",
+          },
+          schema: X402DemoOutputSchema,
+        },
+      }),
+    },
   } as const;
 
   const protectedGet = withX402(

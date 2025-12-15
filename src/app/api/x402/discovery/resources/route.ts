@@ -1,7 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
+import { withBazaar } from "@x402/extensions/bazaar";
 import { z } from "zod";
 
 import { getEnvServer } from "@/lib/env/env.server";
+import { getX402FacilitatorClient } from "@/lib/x402/facilitator";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
@@ -14,6 +16,7 @@ const QuerySchema = z.object({
 });
 
 export async function GET(req: NextRequest) {
+  const requestId = req.headers.get("x-request-id") ?? "unknown";
   const env = getEnvServer();
   const parsed = QuerySchema.safeParse(
     Object.fromEntries(req.nextUrl.searchParams.entries())
@@ -21,38 +24,37 @@ export async function GET(req: NextRequest) {
 
   if (!parsed.success) {
     return NextResponse.json(
-      { error: { code: "INVALID_QUERY", issues: parsed.error.issues } },
+      { error: { code: "INVALID_QUERY", issues: parsed.error.issues }, requestId },
       { status: 400 }
     );
   }
 
-  const base = env.X402_FACILITATOR_URL.endsWith("/")
-    ? env.X402_FACILITATOR_URL
-    : `${env.X402_FACILITATOR_URL}/`;
-
-  const url = new URL("discovery/resources", base);
-  url.searchParams.set("type", parsed.data.type);
-  url.searchParams.set("limit", String(parsed.data.limit));
   const offset = parsed.data.offset ?? parsed.data.cursor;
-  if (typeof offset === "number") url.searchParams.set("offset", String(offset));
 
-  const res = await fetch(url.toString(), {
-    method: "GET",
-    headers: { Accept: "application/json" },
-    cache: "no-store",
-  });
+  try {
+    const facilitator = withBazaar(getX402FacilitatorClient());
+    const data = await facilitator.extensions.discovery.listResources({
+      type: parsed.data.type,
+      limit: parsed.data.limit,
+      offset,
+    });
 
-  const contentType = res.headers.get("content-type") ?? "";
-  const body = contentType.includes("application/json")
-    ? await res.json()
-    : await res.text();
-
-  return NextResponse.json(
-    {
-      ok: res.ok,
+    return NextResponse.json({
+      ok: true,
       facilitatorUrl: env.X402_FACILITATOR_URL,
-      data: body,
-    },
-    { status: res.ok ? 200 : 502 }
-  );
+      requestId,
+      data,
+    });
+  } catch (err: unknown) {
+    const message = err instanceof Error ? err.message : "Facilitator request failed.";
+    return NextResponse.json(
+      {
+        ok: false,
+        facilitatorUrl: env.X402_FACILITATOR_URL,
+        requestId,
+        error: { code: "FACILITATOR_REQUEST_FAILED", message },
+      },
+      { status: 502 },
+    );
+  }
 }

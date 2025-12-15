@@ -17,7 +17,8 @@
     "convex:deploy": "npx convex deploy -y",
     "convex:redeploy": "pnpm run convex:deploy && pnpm run convex:dev",
     "convex:reset": "dotenv -e .env -e .env.local -- tsx scripts/reset-convex.ts",
-    "solana:create-badge-mint": "dotenv -e .env -e .env.local -- tsx scripts/solana/create-badge-mint.ts"
+    "solana:create-badge-mint": "dotenv -e .env -e .env.local -- tsx scripts/solana/create-badge-mint.ts",
+    "x402:buyer": "dotenv -e .env -e .env.local -- tsx scripts/x402/buyer.ts"
   },
   "dependencies": {
     "@coinbase/x402": "^2.0.0",
@@ -29,14 +30,18 @@
     "@radix-ui/react-label": "^2.1.8",
     "@radix-ui/react-separator": "^1.1.8",
     "@radix-ui/react-slot": "^1.2.4",
+    "@solana/kit": "^2.3.0",
     "@solana/pay": "^0.2.6",
     "@solana/spl-token": "^0.4.14",
+    "@solana/sysvars": "^2.1.0",
     "@solana/wallet-adapter-base": "^0.9.27",
     "@solana/wallet-adapter-phantom": "^0.9.28",
     "@solana/wallet-adapter-react": "^0.15.39",
     "@solana/wallet-adapter-react-ui": "^0.9.39",
     "@solana/wallet-adapter-solflare": "^0.6.32",
     "@solana/web3.js": "^1.98.4",
+    "@upstash/ratelimit": "^2.0.7",
+    "@upstash/redis": "^1.35.8",
     "@x402/core": "2.0.0",
     "@x402/extensions": "2.0.0",
     "@x402/fetch": "2.0.0",

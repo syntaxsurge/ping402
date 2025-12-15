@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
 import { withX402 } from "@x402/next";
-import { declareDiscoveryExtension } from "@x402/extensions/bazaar";
 import { z } from "zod";
 import type { Id } from "@convex/_generated/dataModel";
 
@@ -17,6 +16,8 @@ import {
   parsePaymentSignatureHeader,
   parsePaymentResponseHeader,
 } from "@/lib/x402/parsePayment";
+import { declareBazaarBodyDiscoveryExtension } from "@/lib/x402/bazaar";
+import { PingSendInputSchema, PingSendOutputSchema } from "@/lib/x402/discoverySchemas";
 import { getX402Server } from "@/lib/x402/server";
 import { logger } from "@/lib/observability/logger";
 import { getPingTierConfig, PingTierSchema, type PingTier } from "@/lib/ping/tiers";
@@ -252,25 +253,15 @@ export async function POST(req: NextRequest) {
       body: { error: { code: "PAYMENT_REQUIRED" }, requestId },
     }),
     extensions: {
-      ...declareDiscoveryExtension({
-        bodyType: "form-data",
+      ...declareBazaarBodyDiscoveryExtension({
+        bodyType: "json",
         input: {
           to: toHandle,
           body: "Hello from ping402!",
           senderName: "Sender",
           senderContact: "@sender",
         },
-        inputSchema: {
-          type: "object",
-          properties: {
-            to: { type: "string", description: "Recipient handle (3-32 chars)." },
-            body: { type: "string", description: "Message body (max 280 chars)." },
-            senderName: { type: "string", description: "Optional display name." },
-            senderContact: { type: "string", description: "Optional contact info." },
-          },
-          required: ["to", "body"],
-          additionalProperties: false,
-        },
+        inputSchema: PingSendInputSchema,
         output: {
           example: {
             ok: true,
@@ -281,8 +272,9 @@ export async function POST(req: NextRequest) {
             payer: "sender_wallet",
             requestId,
           },
+          schema: PingSendOutputSchema,
         },
-      } as unknown as Parameters<typeof declareDiscoveryExtension>[0]),
+      }),
     },
   } as const;
 

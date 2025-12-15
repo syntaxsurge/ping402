@@ -33,6 +33,7 @@ Paid inbox pings on Solana using x402 (HTTP 402 Payment Required), with messages
      - `CDP_API_KEY_ID` and `CDP_API_KEY_SECRET` (required when using the CDP facilitator URL)
      - `PING402_JWT_SECRET` (required; used for the creator HttpOnly session cookie)
      - `PING402_BADGE_MINT` + `PING402_BADGE_AUTHORITY_SECRET_KEY` (optional; enables Token-2022 supporter badges)
+     - `UPSTASH_REDIS_REST_URL` + `UPSTASH_REDIS_REST_TOKEN` (required for production deployments; enables edge rate limiting)
 
 4. Start Next.js:
 
@@ -59,3 +60,21 @@ Supporter badges mint a non-transferable Token-2022 token to the payer after a s
 
 1. Set `PING402_BADGE_AUTHORITY_SECRET_KEY` (or `PING402_BADGE_AUTHORITY_KEYPAIR_PATH`) and ensure the authority wallet has SOL for fees.
 2. Run `pnpm solana:create-badge-mint` and copy the printed mint address into `PING402_BADGE_MINT`.
+
+## x402 buyer script (Bazaar discovery + payment)
+
+`pnpm x402:buyer` runs a CLI buyer that:
+
+- Fetches Bazaar discovery listings (via the app’s `/api/x402/discovery/resources` proxy by default).
+- Pays an x402-protected endpoint on Solana and prints the response.
+
+Required env:
+
+- `PING402_BUYER_SECRET_KEY` or `PING402_BUYER_KEYPAIR_PATH` (buyer wallet used to pay)
+
+Optional env:
+
+- `PING402_BASE_URL` (defaults to `http://localhost:3000`)
+- `PING402_BUYER_MODE` (`demo` or `ping`)
+- `PING402_DISCOVERY_URL` (override discovery source)
+- `PING402_TO_HANDLE`, `PING402_MESSAGE`, `PING402_TIER` (required when `PING402_BUYER_MODE=ping`)
