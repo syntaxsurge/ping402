@@ -22,10 +22,8 @@ export default function HomePage() {
             </div>
 
             <div className="space-y-3">
-              <h1 className="text-balance text-4xl font-semibold tracking-tight sm:text-5xl">
-                Paid pings that get answered.
-              </h1>
-              <p className="text-balance text-base text-muted-foreground sm:text-lg">
+              <h1 className="h1">Paid pings that get answered.</h1>
+              <p className="lead">
                 ping402 turns “send a message” into a single, verifiable action. If you want
                 priority attention, you pay. If you pay, your ping is delivered—no
                 subscriptions, no spam, no guesswork.
@@ -55,8 +53,8 @@ export default function HomePage() {
 
       <section id="how-it-works" className="scroll-mt-24 space-y-8">
         <div className="space-y-2">
-          <h2 className="text-2xl font-semibold tracking-tight">How it works</h2>
-          <p className="text-muted-foreground">
+          <h2 className="h3">How it works</h2>
+          <p className="muted">
             End-to-end is intentionally simple: paywall → proof → delivery.
           </p>
         </div>
@@ -96,8 +94,8 @@ export default function HomePage() {
 
       <section className="space-y-8">
         <div className="space-y-2">
-          <h2 className="text-2xl font-semibold tracking-tight">Built for signal</h2>
-          <p className="text-muted-foreground">
+          <h2 className="h3">Built for signal</h2>
+          <p className="muted">
             A paid inbox works anywhere attention is scarce.
           </p>
         </div>
@@ -140,8 +138,8 @@ export default function HomePage() {
 
       <section id="tiers" className="scroll-mt-24 space-y-8">
         <div className="space-y-2">
-          <h2 className="text-2xl font-semibold tracking-tight">Message tiers</h2>
-          <p className="text-muted-foreground">
+          <h2 className="h3">Message tiers</h2>
+          <p className="muted">
             Three tiers, one simple rule: higher tier → higher priority.
           </p>
         </div>
@@ -184,8 +182,8 @@ export default function HomePage() {
 
       <section id="faq" className="scroll-mt-24 space-y-8">
         <div className="space-y-2">
-          <h2 className="text-2xl font-semibold tracking-tight">FAQ</h2>
-          <p className="text-muted-foreground">
+          <h2 className="h3">FAQ</h2>
+          <p className="muted">
             The details behind a paid, spam-resistant inbox.
           </p>
         </div>
@@ -252,8 +250,8 @@ export default function HomePage() {
       <section className="rounded-xl border bg-card/60 p-8 backdrop-blur">
         <div className="flex flex-col gap-6 md:flex-row md:items-center md:justify-between">
           <div className="space-y-2">
-            <h2 className="text-xl font-semibold tracking-tight">Ready to get started?</h2>
-            <p className="text-sm text-muted-foreground">
+            <h2 className="h4">Ready to get started?</h2>
+            <p className="muted">
               Find a creator inbox to send a paid ping, or claim your handle to start receiving
               them.
             </p>

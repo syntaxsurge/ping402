@@ -37,11 +37,11 @@ export default async function ReceiptPage({
     <div className="mx-auto max-w-2xl space-y-6">
       <header className="space-y-2">
         <div className="flex flex-wrap items-center gap-2">
-          <h1 className="text-2xl font-semibold tracking-tight">Receipt</h1>
+          <h1 className="h3">Receipt</h1>
           <Badge variant="secondary">@{receipt.toHandle}</Badge>
           <Badge variant="outline">{receipt.tier}</Badge>
         </div>
-        <p className="text-sm text-muted-foreground">
+        <p className="muted">
           Verifiable on-chain proof that a ping was paid for.
         </p>
       </header>

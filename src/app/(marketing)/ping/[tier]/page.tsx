@@ -37,10 +37,10 @@ export default async function PingComposePage({
     <div className="mx-auto max-w-4xl space-y-6">
       <div className="flex items-center justify-between gap-4">
         <div className="min-w-0">
-          <h1 className="truncate text-2xl font-semibold tracking-tight">
+          <h1 className="h3 truncate">
             {meta.label} ping ({meta.priceUsd})
           </h1>
-          <p className="text-sm text-muted-foreground">{meta.description}</p>
+          <p className="muted">{meta.description}</p>
         </div>
         <Button asChild variant="ghost">
           <Link href={backHref}>Back</Link>

@@ -16,10 +16,8 @@ export default function PingLandingPage() {
           <Badge variant="secondary">Solana settlement</Badge>
           <Badge variant="secondary">x402 (HTTP 402)</Badge>
         </div>
-        <h1 className="text-balance text-3xl font-semibold tracking-tight sm:text-4xl">
-          Send a ping
-        </h1>
-        <p className="text-balance text-muted-foreground">
+        <h1 className="h2">Send a ping</h1>
+        <p className="lead">
           Enter a creator handle to open their public inbox, choose a tier, and send a paid
           message.
         </p>

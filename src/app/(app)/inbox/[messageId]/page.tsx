@@ -75,8 +75,8 @@ export default async function MessageDetailPage({
     <div className="space-y-8">
       <div className="flex items-start justify-between gap-4">
         <div className="space-y-1">
-          <h1 className="text-2xl font-semibold tracking-tight">Message</h1>
-          <p className="text-sm text-muted-foreground">
+          <h1 className="h3">Message</h1>
+          <p className="muted">
             Received {new Date(message.createdAt).toLocaleString()}
           </p>
         </div>

@@ -17,12 +17,12 @@ export default function FundPage() {
     <div className="mx-auto max-w-3xl space-y-6">
       <header className="space-y-2">
         <div className="flex flex-wrap items-center gap-2">
-          <h1 className="text-3xl font-semibold tracking-tight">Funding</h1>
+          <h1 className="h2">Funding</h1>
           <Badge variant="secondary" className="capitalize">
             {networkLabel}
           </Badge>
         </div>
-        <p className="text-muted-foreground">
+        <p className="lead">
           ping402 paywalls paid actions using x402. Your wallet needs enough balance for fees and
           the payment asset requested by the paywall.
         </p>

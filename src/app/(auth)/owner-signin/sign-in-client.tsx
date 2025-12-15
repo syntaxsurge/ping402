@@ -2,16 +2,27 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useSearchParams } from "next/navigation";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useForm } from "react-hook-form";
 import { useWallet } from "@solana/wallet-adapter-react";
 import { toast } from "sonner";
+import { z } from "zod";
 
 import { WalletConnectButton } from "@/components/solana/WalletConnectButton";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Form,
+  FormControl,
+  FormDescription,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
 import { Separator } from "@/components/ui/separator";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { buildPing402SignInMessage } from "@/lib/solana/siwsMessage";
 import { isValidHandle, normalizeHandle } from "@/lib/utils/handles";
@@ -29,6 +40,27 @@ function shortAddress(address: string) {
   return `${address.slice(0, 4)}…${address.slice(-4)}`;
 }
 
+const OwnerProfileSchema = z.object({
+  handle: z
+    .string()
+    .trim()
+    .min(3, "Handle must be 3–32 characters.")
+    .max(32, "Handle must be 3–32 characters.")
+    .refine((value) => isValidHandle(normalizeHandle(value)), {
+      message: "Use letters, numbers, underscores, hyphens.",
+    }),
+  displayName: z
+    .string()
+    .trim()
+    .max(64, "Display name must be 64 characters or fewer.")
+    .refine((value) => value.length === 0 || value.length >= 2, {
+      message: "Display name must be at least 2 characters.",
+    }),
+  bio: z.string().trim().max(280, "Bio must be 280 characters or fewer."),
+});
+
+type OwnerProfileValues = z.infer<typeof OwnerProfileSchema>;
+
 function OwnerSignInInner() {
   const params = useSearchParams();
   const { publicKey, signMessage } = useWallet();
@@ -45,10 +77,18 @@ function OwnerSignInInner() {
   } | null>(null);
 
   const initialHandle = useMemo(() => normalizeHandle(params.get("handle") ?? ""), [params]);
-  const [handleInput, setHandleInput] = useState(initialHandle);
-  const normalizedHandle = useMemo(() => normalizeHandle(handleInput), [handleInput]);
-  const [displayName, setDisplayName] = useState("");
-  const [bio, setBio] = useState("");
+  const form = useForm<OwnerProfileValues>({
+    resolver: zodResolver(OwnerProfileSchema),
+    mode: "onChange",
+    defaultValues: {
+      handle: initialHandle,
+      displayName: "",
+      bio: "",
+    },
+  });
+
+  const handleValue = form.watch("handle");
+  const normalizedHandle = useMemo(() => normalizeHandle(handleValue), [handleValue]);
   const [lookup, setLookup] = useState<LookupState>({ state: "idle" });
   const errorCode = useMemo(() => params.get("error"), [params]);
 
@@ -135,23 +175,34 @@ function OwnerSignInInner() {
     Boolean(pubkeyBase58) &&
     lookup.ownerWallet === pubkeyBase58;
 
-  async function onSignIn() {
-    if (!normalizedHandle) {
+  const onSignIn = form.handleSubmit(async (values) => {
+    const handle = normalizeHandle(values.handle);
+
+    if (!handle) {
       toast.error("Enter a handle to continue.");
       return;
     }
-    if (!isValidHandle(normalizedHandle)) {
+
+    if (!isValidHandle(handle)) {
       toast.error("Handle must be 3–32 chars: letters, numbers, underscores, hyphens.");
       return;
     }
+
+    if (lookup.state === "checking") {
+      toast.message("Checking handle availability…");
+      return;
+    }
+
     if (lookup.state === "taken" && handleTakenByOtherWallet) {
       toast.error("That handle is owned by a different wallet.");
       return;
     }
+
     if (!pubkeyBase58) {
       toast.error("Connect a wallet first.");
       return;
     }
+
     if (!signMessage) {
       toast.error("Wallet does not support message signing.");
       return;
@@ -171,7 +222,7 @@ function OwnerSignInInner() {
         domain: window.location.host,
         uri: window.location.origin,
         publicKey: pubkeyBase58,
-        handle: normalizedHandle,
+        handle,
         nonce,
         issuedAt,
         chainId,
@@ -182,13 +233,13 @@ function OwnerSignInInner() {
 
       const signatureB64 = btoa(String.fromCharCode(...sig));
       setPendingForm({
-          publicKey: pubkeyBase58,
-          signatureB64,
-          nonce,
-          issuedAt,
-          handle: normalizedHandle,
-          displayName: displayName.trim() || undefined,
-          bio: bio.trim() || undefined,
+        publicKey: pubkeyBase58,
+        signatureB64,
+        nonce,
+        issuedAt,
+        handle,
+        displayName: values.displayName.trim() || undefined,
+        bio: values.bio.trim() || undefined,
       });
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : "Sign-in failed";
@@ -196,7 +247,7 @@ function OwnerSignInInner() {
     } finally {
       setLoading(false);
     }
-  }
+  });
 
   return (
     <main className="mx-auto w-full max-w-xl space-y-6">
@@ -207,153 +258,194 @@ function OwnerSignInInner() {
       </div>
 
       <div className="space-y-2">
-        <h1 className="text-balance text-3xl font-semibold tracking-tight">
-          Claim your handle
-        </h1>
-        <p className="text-balance text-muted-foreground">
+        <h1 className="h2">Claim your handle</h1>
+        <p className="lead">
           Pick a handle, connect a Solana wallet, and sign a message (no SOL transfer) to manage
           your paid inbox. Handle claims are free — payments only happen when someone sends you a
           ping.
         </p>
       </div>
 
-      <Card className="bg-card/60 backdrop-blur">
-        <CardHeader className="space-y-2">
-          <CardTitle className="text-base">Step 1 · Choose a handle</CardTitle>
-          <p className="text-sm text-muted-foreground">
-            Your public inbox lives at <span className="font-mono">/u/[handle]</span>.
-          </p>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="space-y-2">
-            <Label htmlFor="handle">Handle</Label>
-            <div className="relative">
-              <div className="pointer-events-none absolute inset-y-0 left-3 flex items-center text-sm text-muted-foreground">
-                @
-              </div>
-              <Input
-                id="handle"
-                value={handleInput}
-                onChange={(e) => setHandleInput(e.target.value)}
-                placeholder="e.g. ping402"
-                className="pl-7"
-                autoCapitalize="none"
-                autoCorrect="off"
-                spellCheck={false}
+      <Form {...form}>
+        <form onSubmit={onSignIn} className="space-y-6">
+          <Card className="bg-card/60 backdrop-blur">
+            <CardHeader className="space-y-2">
+              <CardTitle className="text-base">Step 1 · Choose a handle</CardTitle>
+              <p className="text-sm text-muted-foreground">
+                Your public inbox lives at <span className="font-mono">/u/[handle]</span>.
+              </p>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <FormField
+                control={form.control}
+                name="handle"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Handle</FormLabel>
+                    <FormControl>
+                      <div className="relative">
+                        <div className="pointer-events-none absolute inset-y-0 left-3 flex items-center text-sm text-muted-foreground">
+                          @
+                        </div>
+                        <Input
+                          {...field}
+                          placeholder="e.g. ping402"
+                          className="pl-7"
+                          autoCapitalize="none"
+                          autoCorrect="off"
+                          spellCheck={false}
+                        />
+                      </div>
+                    </FormControl>
+                    <FormDescription className="text-xs">
+                      {lookup.state === "checking" ? "Checking availability…" : null}
+                      {lookup.state === "available" ? (
+                        <span className="text-emerald-500">
+                          Available — signing will claim this handle.
+                        </span>
+                      ) : null}
+                      {lookup.state === "taken" ? (
+                        <>
+                          {handleOwnedByConnectedWallet ? (
+                            <span className="text-emerald-500">
+                              Already claimed by this wallet — you can sign in.
+                            </span>
+                          ) : (
+                            <>
+                              Taken — owned by{" "}
+                              <span className="font-mono">{shortAddress(lookup.ownerWallet)}</span>.
+                            </>
+                          )}
+                        </>
+                      ) : null}
+                      {lookup.state === "invalid" ? (
+                        <>Use 3–32 chars: letters, numbers, underscores, hyphens.</>
+                      ) : null}
+                      {lookup.state === "idle" ? <>Choose what people will ping.</> : null}
+                    </FormDescription>
+                    <FormMessage />
+                  </FormItem>
+                )}
               />
-            </div>
-            <div className="text-xs text-muted-foreground">
-              {lookup.state === "checking" ? "Checking availability…" : null}
-              {lookup.state === "available" ? (
-                <span className="text-emerald-500">
-                  Available — signing will claim this handle.
-                </span>
-              ) : null}
-              {lookup.state === "taken" ? (
-                <>
-                  {handleOwnedByConnectedWallet ? (
-                    <span className="text-emerald-500">
-                      Already claimed by this wallet — you can sign in.
-                    </span>
-                  ) : (
-                    <>
-                      Taken — owned by{" "}
-                      <span className="font-mono">{shortAddress(lookup.ownerWallet)}</span>.
-                    </>
+
+              <div className="grid gap-4 sm:grid-cols-2">
+                <FormField
+                  control={form.control}
+                  name="displayName"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Display name</FormLabel>
+                      <FormControl>
+                        <Input
+                          {...field}
+                          placeholder="Shown on your public inbox"
+                          maxLength={64}
+                        />
+                      </FormControl>
+                      <FormDescription>Optional.</FormDescription>
+                      <FormMessage />
+                    </FormItem>
                   )}
-                </>
+                />
+
+                <FormField
+                  control={form.control}
+                  name="bio"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Bio</FormLabel>
+                      <FormControl>
+                        <Textarea
+                          {...field}
+                          placeholder="One-line description"
+                          maxLength={280}
+                          className="min-h-[96px]"
+                        />
+                      </FormControl>
+                      <FormDescription>Optional.</FormDescription>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card className="bg-card/60 backdrop-blur">
+            <CardHeader className="space-y-2">
+              <CardTitle className="text-base">Step 2 · Connect & sign</CardTitle>
+              <p className="text-sm text-muted-foreground">
+                Signing creates a 7‑day HttpOnly session cookie. This step does not move funds.
+              </p>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <WalletConnectButton />
+
+              {handleTakenByOtherWallet ? (
+                <div className="rounded-lg border border-destructive/30 bg-destructive/10 p-3 text-sm text-destructive">
+                  This handle is owned by another wallet. Switch wallets or choose a different
+                  handle.
+                </div>
               ) : null}
-              {lookup.state === "invalid" ? (
-                <>Use 3–32 chars: letters, numbers, underscores, hyphens.</>
+
+              <Separator />
+
+              {pendingForm ? (
+                <div className="space-y-2">
+                  <div className="rounded-lg border bg-muted/30 p-3 text-sm text-muted-foreground">
+                    Verifying signature…
+                  </div>
+                  <Button
+                    type="button"
+                    variant="brand"
+                    className="w-full"
+                    onClick={() => formRef.current?.requestSubmit()}
+                  >
+                    Continue
+                  </Button>
+                </div>
               ) : null}
-              {lookup.state === "idle" ? <>Choose what people will ping.</> : null}
-            </div>
-          </div>
 
-          <div className="grid gap-4 sm:grid-cols-2">
-            <div className="space-y-2">
-              <Label htmlFor="displayName">Display name (optional)</Label>
-              <Input
-                id="displayName"
-                value={displayName}
-                onChange={(e) => setDisplayName(e.target.value)}
-                placeholder="Shown on your public inbox"
-                maxLength={64}
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="bio">Bio (optional)</Label>
-              <Textarea
-                id="bio"
-                value={bio}
-                onChange={(e) => setBio(e.target.value)}
-                placeholder="One-line description"
-                maxLength={280}
-              />
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-
-      <Card className="bg-card/60 backdrop-blur">
-        <CardHeader className="space-y-2">
-          <CardTitle className="text-base">Step 2 · Connect & sign</CardTitle>
-          <p className="text-sm text-muted-foreground">
-            Signing creates a 7‑day HttpOnly session cookie. This step does not move funds.
-          </p>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <WalletConnectButton />
-
-          {handleTakenByOtherWallet ? (
-            <div className="rounded-lg border border-destructive/30 bg-destructive/10 p-3 text-sm text-destructive">
-              This handle is owned by another wallet. Switch wallets or choose a different
-              handle.
-            </div>
-          ) : null}
-
-          <Separator />
-
-          {pendingForm ? (
-            <form ref={formRef} action="/api/auth/verify" method="POST">
-              <input type="hidden" name="publicKey" value={pendingForm.publicKey} />
-              <input type="hidden" name="signature" value={pendingForm.signatureB64} />
-              <input type="hidden" name="nonce" value={pendingForm.nonce} />
-              <input type="hidden" name="issuedAt" value={pendingForm.issuedAt} />
-              <input type="hidden" name="handle" value={pendingForm.handle} />
-              {pendingForm.displayName ? (
-                <input type="hidden" name="displayName" value={pendingForm.displayName} />
-              ) : null}
-              {pendingForm.bio ? (
-                <input type="hidden" name="bio" value={pendingForm.bio} />
-              ) : null}
-              <Button type="submit" variant="brand" className="w-full">
-                Continue
+              <Button
+                type="submit"
+                className="w-full"
+                disabled={
+                  loading ||
+                  Boolean(pendingForm) ||
+                  !pubkeyBase58 ||
+                  !signMessage ||
+                  !normalizedHandle ||
+                  !isValidHandle(normalizedHandle) ||
+                  lookup.state === "checking" ||
+                  handleTakenByOtherWallet ||
+                  !form.formState.isValid
+                }
+              >
+                {loading ? "Signing in…" : "Sign in / Claim handle"}
               </Button>
-            </form>
+
+              <p className="text-xs text-muted-foreground">
+                You’ll land on your dashboard and inbox after verification.
+              </p>
+            </CardContent>
+          </Card>
+        </form>
+      </Form>
+
+      {pendingForm ? (
+        <form ref={formRef} action="/api/auth/verify" method="POST" className="hidden">
+          <input type="hidden" name="publicKey" value={pendingForm.publicKey} />
+          <input type="hidden" name="signature" value={pendingForm.signatureB64} />
+          <input type="hidden" name="nonce" value={pendingForm.nonce} />
+          <input type="hidden" name="issuedAt" value={pendingForm.issuedAt} />
+          <input type="hidden" name="handle" value={pendingForm.handle} />
+          {pendingForm.displayName ? (
+            <input type="hidden" name="displayName" value={pendingForm.displayName} />
           ) : null}
-
-          <Button
-            className="w-full"
-            disabled={
-              loading ||
-              Boolean(pendingForm) ||
-              !pubkeyBase58 ||
-              !signMessage ||
-              !normalizedHandle ||
-              !isValidHandle(normalizedHandle) ||
-              handleTakenByOtherWallet
-            }
-            onClick={onSignIn}
-          >
-            {loading ? "Signing in…" : "Sign in / Claim handle"}
-          </Button>
-
-          <p className="text-xs text-muted-foreground">
-            You’ll land on your dashboard and inbox after verification.
-          </p>
-        </CardContent>
-      </Card>
+          {pendingForm.bio ? <input type="hidden" name="bio" value={pendingForm.bio} /> : null}
+          <button type="submit" />
+        </form>
+      ) : null}
     </main>
   );
 }

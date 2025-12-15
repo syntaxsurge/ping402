@@ -5,7 +5,7 @@ export function SiteFooter() {
 
   return (
     <footer className="border-t">
-      <div className="mx-auto grid w-full max-w-6xl gap-8 px-4 py-12 md:grid-cols-4">
+      <div className="container-page grid gap-8 py-12 md:grid-cols-4">
         <div className="space-y-3 md:col-span-2">
           <div className="flex items-center gap-2 font-semibold tracking-tight">
             <span className="relative grid h-8 w-8 place-items-center overflow-hidden rounded-lg border bg-muted">
@@ -67,7 +67,7 @@ export function SiteFooter() {
       </div>
 
       <div className="border-t">
-        <div className="mx-auto flex w-full max-w-6xl flex-col gap-2 px-4 py-6 text-xs text-muted-foreground sm:flex-row sm:items-center sm:justify-between">
+        <div className="container-page flex flex-col gap-2 py-6 text-xs text-muted-foreground sm:flex-row sm:items-center sm:justify-between">
           <div>© {year} ping402.</div>
           <div className="flex flex-wrap gap-x-4 gap-y-1">
             <span>Solana settlement</span>

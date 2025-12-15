@@ -172,7 +172,7 @@ export default async function UserProfilePage({
       </Card>
 
       <section className="space-y-3">
-        <h2 className="text-lg font-semibold">Send a paid ping</h2>
+        <h2 className="h4">Send a paid ping</h2>
         <div className="grid gap-3 sm:grid-cols-3">
           {PING_TIER_ORDER.map((tier) => {
             const tierConfig = getPingTierConfig(tier);

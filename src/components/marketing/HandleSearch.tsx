@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useMemo, useRef, useState } from "react";
+import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -38,6 +39,7 @@ export function HandleSearch({
 }: {
   defaultValue?: string;
 }) {
+  const reduceMotion = useReducedMotion();
   const [input, setInput] = useState(defaultValue);
   const normalized = useMemo(() => normalizeHandle(input), [input]);
   const [state, setState] = useState<
@@ -140,82 +142,96 @@ export function HandleSearch({
           {errorText ? <p className="text-xs text-destructive">{errorText}</p> : null}
         </form>
 
-        {state.status === "loading" ? (
-          <div className="rounded-md border bg-muted/20 p-4 text-sm text-muted-foreground">
-            Searching <span className="font-mono">@{state.normalized}</span>…
-          </div>
-        ) : null}
+        <AnimatePresence mode="wait" initial={false}>
+          {state.status === "loading" ? (
+            <motion.div
+              key="loading"
+              initial={{ opacity: 0, y: reduceMotion ? 0 : 6 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: reduceMotion ? 0 : -6 }}
+              transition={{ duration: reduceMotion ? 0 : 0.18, ease: "easeOut" }}
+              className="rounded-md border bg-muted/20 p-4 text-sm text-muted-foreground"
+            >
+              Searching <span className="font-mono">@{state.normalized}</span>…
+            </motion.div>
+          ) : state.status === "ready" && state.data.results.length > 0 ? (
+            <motion.div
+              key="results"
+              initial={{ opacity: 0, y: reduceMotion ? 0 : 8 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: reduceMotion ? 0 : -8 }}
+              transition={{ duration: reduceMotion ? 0 : 0.2, ease: "easeOut" }}
+              className="rounded-md border bg-background"
+            >
+              <div className="flex items-center justify-between gap-4 border-b px-4 py-3">
+                <div className="text-sm font-medium">Results</div>
+                {primaryHandle ? (
+                  <div className="text-xs text-muted-foreground">
+                    Showing <span className="font-mono">@{primaryHandle}</span> and suggestions
+                  </div>
+                ) : null}
+              </div>
 
-        {state.status === "ready" && state.data.results.length > 0 ? (
-          <div className="rounded-md border bg-background">
-            <div className="flex items-center justify-between gap-4 border-b px-4 py-3">
-              <div className="text-sm font-medium">Results</div>
-              {primaryHandle ? (
-                <div className="text-xs text-muted-foreground">
-                  Showing <span className="font-mono">@{primaryHandle}</span> and suggestions
-                </div>
-              ) : null}
-            </div>
-
-            <div className="divide-y">
-              {state.data.results.map((result) => (
-                <div
-                  key={result.handle}
-                  className="flex flex-col gap-3 px-4 py-4 sm:flex-row sm:items-center sm:justify-between"
-                >
-                  <div className="min-w-0">
-                    <div className="flex flex-wrap items-center gap-2">
-                      <div className="truncate font-mono text-sm">@{result.handle}</div>
-                      {availabilityBadge(result.exists)}
-                      {!result.exists ? (
-                        <Badge variant="outline" className="text-muted-foreground">
-                          Free
-                        </Badge>
+              <div className="divide-y">
+                {state.data.results.map((result) => (
+                  <div
+                    key={result.handle}
+                    className="flex flex-col gap-3 px-4 py-4 sm:flex-row sm:items-center sm:justify-between"
+                  >
+                    <div className="min-w-0">
+                      <div className="flex flex-wrap items-center gap-2">
+                        <div className="truncate font-mono text-sm">@{result.handle}</div>
+                        {availabilityBadge(result.exists)}
+                        {!result.exists ? (
+                          <Badge variant="outline" className="text-muted-foreground">
+                            Free
+                          </Badge>
+                        ) : null}
+                      </div>
+                      {result.exists && result.displayName ? (
+                        <div className="mt-1 truncate text-xs text-muted-foreground">
+                          {result.displayName}
+                        </div>
                       ) : null}
                     </div>
-                    {result.exists && result.displayName ? (
-                      <div className="mt-1 truncate text-xs text-muted-foreground">
-                        {result.displayName}
-                      </div>
-                    ) : null}
-                  </div>
 
-                  <div className="flex flex-wrap gap-2">
-                    {result.exists ? (
-                      <Button asChild size="sm" variant="outline">
-                        <Link href={`/u/${encodeURIComponent(result.handle)}`}>View inbox</Link>
-                      </Button>
-                    ) : (
-                      <Button asChild size="sm" variant="brand">
-                        <Link
-                          href={`/owner-signin?handle=${encodeURIComponent(result.handle)}`}
-                        >
-                          Claim
-                        </Link>
-                      </Button>
-                    )}
+                    <div className="flex flex-wrap gap-2">
+                      {result.exists ? (
+                        <Button asChild size="sm" variant="outline">
+                          <Link href={`/u/${encodeURIComponent(result.handle)}`}>View inbox</Link>
+                        </Button>
+                      ) : (
+                        <Button asChild size="sm" variant="brand">
+                          <Link
+                            href={`/owner-signin?handle=${encodeURIComponent(result.handle)}`}
+                          >
+                            Claim
+                          </Link>
+                        </Button>
+                      )}
+                    </div>
                   </div>
-                </div>
-              ))}
-            </div>
-
-            <Separator />
-            <div className="flex flex-col gap-2 px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
-              <p className="text-xs text-muted-foreground">
-                Claiming requires a Solana wallet signature (no SOL transfer). Payments are only
-                required when sending a ping.
-              </p>
-              <div className="flex flex-wrap gap-2">
-                <Button asChild size="sm" variant="ghost">
-                  <Link href="/how-it-works">How it works</Link>
-                </Button>
-                <Button asChild size="sm" variant="outline">
-                  <Link href="/owner-signin">Creator sign-in</Link>
-                </Button>
+                ))}
               </div>
-            </div>
-          </div>
-        ) : null}
+
+              <Separator />
+              <div className="flex flex-col gap-2 px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
+                <p className="text-xs text-muted-foreground">
+                  Claiming requires a Solana wallet signature (no SOL transfer). Payments are only
+                  required when sending a ping.
+                </p>
+                <div className="flex flex-wrap gap-2">
+                  <Button asChild size="sm" variant="ghost">
+                    <Link href="/how-it-works">How it works</Link>
+                  </Button>
+                  <Button asChild size="sm" variant="outline">
+                    <Link href="/owner-signin">Creator sign-in</Link>
+                  </Button>
+                </div>
+              </div>
+            </motion.div>
+          ) : null}
+        </AnimatePresence>
       </CardContent>
     </Card>
   );

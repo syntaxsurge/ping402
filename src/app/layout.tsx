@@ -1,9 +1,9 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "../styles/globals.css";
-import { Toaster } from "sonner";
 import { ThemeProvider } from "@/components/theme/ThemeProvider";
 import { SolanaProvider } from "@/components/solana/SolanaProvider";
+import { Toaster } from "@/components/ui/sonner";
 import { siteConfig } from "@/lib/config/site";
 import { getEnvPublic } from "@/lib/env/env.public";
 
@@ -43,6 +43,12 @@ export default function RootLayout({
           enableSystem
           disableTransitionOnChange
         >
+          <a
+            href="#content"
+            className="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-[100] focus:rounded-md focus:bg-background focus:px-3 focus:py-2 focus:text-sm focus:font-medium focus:text-foreground focus:shadow-md"
+          >
+            Skip to content
+          </a>
           <SolanaProvider networkId={env.X402_NETWORK}>{children}</SolanaProvider>
           <Toaster richColors closeButton />
         </ThemeProvider>

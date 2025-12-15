@@ -12,8 +12,8 @@ export default function HowItWorksPage() {
   return (
     <div className="mx-auto max-w-2xl space-y-6">
       <header className="space-y-2">
-        <h1 className="text-3xl font-semibold tracking-tight">How ping402 works</h1>
-        <p className="text-muted-foreground">
+        <h1 className="h2">How ping402 works</h1>
+        <p className="lead">
           ping402 turns “send a message” into a paid, guaranteed-read action using
           HTTP 402 and Solana micropayments via x402.
         </p>

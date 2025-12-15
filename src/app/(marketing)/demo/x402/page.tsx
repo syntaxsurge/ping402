@@ -6,8 +6,8 @@ export default function X402DemoPage() {
   return (
     <div className="mx-auto max-w-3xl space-y-6">
       <header className="space-y-2">
-        <h1 className="text-3xl font-semibold tracking-tight">x402 demo</h1>
-        <p className="text-muted-foreground">
+        <h1 className="h2">x402 demo</h1>
+        <p className="lead">
           This page is for judges and developers. It makes the 402 → pay → retry flow visible by
           showing the payment headers returned by ping402.
         </p>
