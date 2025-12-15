@@ -20,10 +20,11 @@ import {
   Wallet,
 } from "lucide-react";
 import { useWallet } from "@solana/wallet-adapter-react";
-import { useWalletModal } from "@solana/wallet-adapter-react-ui";
 import { toast } from "sonner";
 
 import { cn } from "@/lib/utils/cn";
+import { buildPing402SignInMessage } from "@/lib/solana/siwsMessage";
+import { useWalletModal } from "@/components/solana/WalletModal";
 import { ModeToggle } from "@/components/theme/ModeToggle";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
@@ -36,12 +37,18 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
-import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
+import { Sheet, SheetClose, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 
 type Session = { walletPubkey: string; handle: string } | null;
 
 type NavLink = {
   href: string;
+  label: string;
+  icon: React.ComponentType<{ className?: string }>;
+};
+
+type HomeLink = {
+  id: "how-it-works" | "funding" | "tiers" | "faq";
   label: string;
   icon: React.ComponentType<{ className?: string }>;
 };
@@ -76,6 +83,45 @@ async function getProfileForWallet(walletPubkey: string): Promise<WalletProfile>
   return data.profile;
 }
 
+async function getAuthNonce() {
+  const res = await fetch("/api/auth/nonce", {
+    method: "POST",
+    headers: { Accept: "application/json" },
+  });
+
+  if (!res.ok) throw new Error("NONCE_FAILED");
+
+  return (await res.json()) as { nonce: string; issuedAt: string; chainId: string };
+}
+
+async function verifyAuthSignature(input: {
+  publicKey: string;
+  signatureB64: string;
+  nonce: string;
+  issuedAt: string;
+  handle: string;
+}) {
+  const res = await fetch("/api/auth/verify", {
+    method: "POST",
+    headers: { Accept: "application/json", "content-type": "application/json" },
+    body: JSON.stringify({
+      publicKey: input.publicKey,
+      signature: input.signatureB64,
+      nonce: input.nonce,
+      issuedAt: input.issuedAt,
+      handle: input.handle,
+    }),
+  });
+
+  if (res.ok) return;
+
+  const data = (await res.json().catch(() => null)) as
+    | { error?: { code?: string } }
+    | null;
+  const code = data?.error?.code ?? "SIGN_IN_FAILED";
+  throw new Error(code);
+}
+
 async function serverSignOut() {
   const res = await fetch("/api/auth/signout", {
     method: "POST",
@@ -90,7 +136,7 @@ async function serverSignOut() {
 export function UnifiedHeaderClient({ session }: { session: Session }) {
   const pathname = usePathname();
   const router = useRouter();
-  const { publicKey, connected, disconnect } = useWallet();
+  const { publicKey, connected, disconnect, signMessage } = useWallet();
   const { setVisible } = useWalletModal();
 
   const [signingOut, setSigningOut] = useState(false);
@@ -101,6 +147,8 @@ export function UnifiedHeaderClient({ session }: { session: Session }) {
 
   const [walletProfile, setWalletProfile] = useState<WalletProfile>(null);
   const [walletProfileLoading, setWalletProfileLoading] = useState(false);
+  const [signingIn, setSigningIn] = useState(false);
+  const signInRef = useRef(false);
 
   useEffect(() => {
     if (session) {
@@ -136,39 +184,55 @@ export function UnifiedHeaderClient({ session }: { session: Session }) {
     };
   }, [connectedAddress, session]);
 
-  const displayHandle = session?.handle ?? walletProfile?.handle ?? null;
-  const accountLabel = displayHandle ? `@${displayHandle}` : "Account";
+  const accountLabel = session ? `@${session.handle}` : "Account";
   const avatarFallback = useMemo(() => {
-    const h = displayHandle?.trim();
+    const h = session?.handle?.trim();
     if (!h) return "U";
     return h.slice(0, 1).toUpperCase();
-  }, [displayHandle]);
+  }, [session?.handle]);
 
-  const navLinks = useMemo<NavLink[]>(
+  const homeLinks = useMemo<HomeLink[]>(
     () => [
-      { href: "/#how-it-works", label: "How it works", icon: BookOpen },
-      { href: "/#funding", label: "Funding", icon: Coins },
-      { href: "/#tiers", label: "Tiers", icon: Sparkles },
-      { href: "/#faq", label: "FAQ", icon: MessageCircle },
+      { id: "how-it-works", label: "How it works", icon: BookOpen },
+      { id: "funding", label: "Funding", icon: Coins },
+      { id: "tiers", label: "Tiers", icon: Sparkles },
+      { id: "faq", label: "FAQ", icon: MessageCircle },
+    ],
+    [],
+  );
+
+  const appLinks = useMemo<NavLink[]>(
+    () => [
       { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
       { href: "/inbox", label: "Inbox", icon: Inbox },
     ],
     [],
   );
 
-  const homeLinks = useMemo<NavLink[]>(
-    () => navLinks.filter((link) => link.href.startsWith("/#")),
-    [navLinks],
-  );
-
-  const appLinks = useMemo<NavLink[]>(
-    () => navLinks.filter((link) => !link.href.startsWith("/#")),
-    [navLinks],
-  );
-
   const searchAction = session ? "/inbox" : "/ping";
   const searchParam = session ? "q" : "query";
   const searchPlaceholder = session ? "Search messages…" : "Search handles…";
+
+  const scrollToHomeSection = useCallback(
+    (id: HomeLink["id"]) => {
+      const hash = `#${id}`;
+
+      if (pathname !== "/") {
+        router.push(`/${hash}`);
+        return;
+      }
+
+      const el = document.getElementById(id);
+      if (!el) {
+        router.push(`/${hash}`);
+        return;
+      }
+
+      el.scrollIntoView({ behavior: "smooth", block: "start" });
+      window.history.replaceState(null, "", `/${hash}`);
+    },
+    [pathname, router],
+  );
 
   const runSignOut = useCallback(async ({ disconnectWallet }: { disconnectWallet: boolean }) => {
     if (signOutRef.current) return;
@@ -194,6 +258,65 @@ export function UnifiedHeaderClient({ session }: { session: Session }) {
       signOutRef.current = false;
     }
   }, [connected, disconnect, router]);
+
+  const runSignIn = useCallback(async () => {
+    if (signInRef.current) return;
+    if (!connectedAddress) return;
+
+    const handle = walletProfile?.handle;
+    if (!handle) return;
+
+    if (!signMessage) {
+      toast.error("Wallet does not support message signing.");
+      return;
+    }
+
+    signInRef.current = true;
+    setSigningIn(true);
+
+    try {
+      const { nonce, issuedAt, chainId } = await getAuthNonce();
+
+      const message = buildPing402SignInMessage({
+        domain: window.location.host,
+        uri: window.location.origin,
+        publicKey: connectedAddress,
+        handle,
+        nonce,
+        issuedAt,
+        chainId,
+      });
+
+      const encoded = new TextEncoder().encode(message);
+      const signatureBytes = await signMessage(encoded);
+      const signatureB64 = btoa(String.fromCharCode(...signatureBytes));
+
+      await verifyAuthSignature({
+        publicKey: connectedAddress,
+        signatureB64,
+        nonce,
+        issuedAt,
+        handle,
+      });
+
+      toast.success(`Signed in as @${handle}`);
+      router.refresh();
+    } catch (err: unknown) {
+      const code = err instanceof Error ? err.message : "SIGN_IN_FAILED";
+      const message =
+        code === "RATE_LIMITED"
+          ? "Too many attempts. Try again soon."
+          : code === "NONCE_EXPIRED" || code === "NONCE_NOT_FOUND"
+            ? "Sign-in nonce expired. Please try again."
+            : code === "INVALID_SIGNATURE"
+              ? "Signature verification failed. Please try again."
+              : "Sign in failed. Please try again.";
+      toast.error(message);
+    } finally {
+      setSigningIn(false);
+      signInRef.current = false;
+    }
+  }, [connectedAddress, router, signMessage, walletProfile?.handle]);
 
   useEffect(() => {
     const wasConnected = prevConnected.current;
@@ -239,47 +362,47 @@ export function UnifiedHeaderClient({ session }: { session: Session }) {
               </Link>
 
 	              <nav className="grid gap-2">
-	                <div className="px-2 pt-1 text-xs font-semibold text-muted-foreground">
-	                  Home
-	                </div>
-	                {homeLinks.map((item) => {
-	                  const Icon = item.icon;
-	                  const active = isActivePath(pathname, item.href);
-	                  return (
-	                    <Button
-	                      key={item.href}
-                      asChild
-                      variant={active ? "secondary" : "ghost"}
-                      className="justify-start"
-                    >
-                      <Link href={item.href}>
-                        <Icon className="h-4 w-4" aria-hidden="true" />
-                        {item.label}
-                      </Link>
-                    </Button>
-	                  );
-	                })}
+		                <div className="px-2 pt-1 text-xs font-semibold text-muted-foreground">
+		                  Home
+		                </div>
+		                {homeLinks.map((item) => {
+		                  const Icon = item.icon;
+		                  return (
+		                    <SheetClose key={item.id} asChild>
+		                      <Button
+		                        type="button"
+		                        variant="ghost"
+		                        className="justify-start"
+		                        onClick={() => scrollToHomeSection(item.id)}
+		                      >
+		                        <Icon className="h-4 w-4" aria-hidden="true" />
+		                        {item.label}
+		                      </Button>
+		                    </SheetClose>
+		                  );
+		                })}
 	
 	                <div className="px-2 pt-2 text-xs font-semibold text-muted-foreground">
 	                  Creator
 	                </div>
-	                {appLinks.map((item) => {
-	                  const Icon = item.icon;
-	                  const active = isActivePath(pathname, item.href);
-	                  return (
-	                    <Button
-	                      key={item.href}
-	                      asChild
-	                      variant={active ? "secondary" : "ghost"}
-	                      className="justify-start"
-	                    >
-	                      <Link href={item.href}>
-	                        <Icon className="h-4 w-4" aria-hidden="true" />
-	                        {item.label}
-	                      </Link>
-	                    </Button>
-	                  );
-	                })}
+		                {appLinks.map((item) => {
+		                  const Icon = item.icon;
+		                  const active = isActivePath(pathname, item.href);
+		                  return (
+		                    <SheetClose key={item.href} asChild>
+		                      <Button
+		                        asChild
+		                        variant={active ? "secondary" : "ghost"}
+		                        className="justify-start"
+		                      >
+		                        <Link href={item.href}>
+		                          <Icon className="h-4 w-4" aria-hidden="true" />
+		                          {item.label}
+		                        </Link>
+		                      </Button>
+		                    </SheetClose>
+		                  );
+		                })}
 	              </nav>
 
 	              <div className="grid gap-2">
@@ -287,17 +410,32 @@ export function UnifiedHeaderClient({ session }: { session: Session }) {
 	                  <Link href="/ping">Send a ping</Link>
 	                </Button>
 	                {!session ? (
-	                  <Button asChild variant="outline">
-	                    <Link
-	                      href={
-	                        walletProfile?.handle
-	                          ? `/owner-signin?handle=${encodeURIComponent(walletProfile.handle)}`
-	                          : "/owner-signin"
-	                      }
-	                    >
-	                      {walletProfile?.handle ? "Sign in" : "Claim a handle"}
-	                    </Link>
-	                  </Button>
+	                  !connectedAddress ? (
+	                    <SheetClose asChild>
+	                      <Button type="button" variant="outline" onClick={() => setVisible(true)}>
+	                        Connect wallet
+	                      </Button>
+	                    </SheetClose>
+	                  ) : walletProfileLoading ? (
+	                    <Button type="button" variant="outline" disabled>
+	                      Checking wallet…
+	                    </Button>
+	                  ) : walletProfile?.handle ? (
+	                    <SheetClose asChild>
+	                      <Button
+	                        type="button"
+	                        variant="outline"
+	                        disabled={signingIn || !signMessage}
+	                        onClick={() => void runSignIn()}
+	                      >
+	                        {signingIn ? "Signing…" : `Sign in @${walletProfile.handle}`}
+	                      </Button>
+	                    </SheetClose>
+	                  ) : (
+	                    <Button asChild variant="outline">
+	                      <Link href="/owner-signin">Claim a handle</Link>
+	                    </Button>
+	                  )
 	                ) : null}
 	              </div>
             </div>
@@ -320,30 +458,32 @@ export function UnifiedHeaderClient({ session }: { session: Session }) {
 
 	        <nav className="hidden items-center gap-1 md:flex">
 	          <DropdownMenu>
-	            <DropdownMenuTrigger asChild>
-	              <Button
-	                variant="ghost"
-	                size="sm"
-	                className={cn("gap-1", pathname === "/" && "bg-accent")}
-	              >
-	                Home
-	                <ChevronDown className="h-4 w-4" aria-hidden="true" />
-	              </Button>
-	            </DropdownMenuTrigger>
-	            <DropdownMenuContent align="start" className="w-56">
-	              {homeLinks.map((link) => {
-	                const Icon = link.icon;
-	                return (
-	                  <DropdownMenuItem key={link.href} asChild className="cursor-pointer">
-	                    <Link href={link.href}>
-	                      <Icon className="h-4 w-4" aria-hidden="true" />
-	                      {link.label}
-	                    </Link>
-	                  </DropdownMenuItem>
-	                );
-	              })}
-	            </DropdownMenuContent>
-	          </DropdownMenu>
+		            <DropdownMenuTrigger asChild>
+		              <Button
+		                variant="ghost"
+		                size="sm"
+		                className="gap-1"
+		              >
+		                Home
+		                <ChevronDown className="h-4 w-4" aria-hidden="true" />
+		              </Button>
+		            </DropdownMenuTrigger>
+		            <DropdownMenuContent align="start" className="w-56">
+		              {homeLinks.map((link) => {
+		                const Icon = link.icon;
+		                return (
+		                  <DropdownMenuItem
+		                    key={link.id}
+		                    className="cursor-pointer"
+		                    onSelect={() => scrollToHomeSection(link.id)}
+		                  >
+		                    <Icon className="h-4 w-4" aria-hidden="true" />
+		                    {link.label}
+		                  </DropdownMenuItem>
+		                );
+		              })}
+		            </DropdownMenuContent>
+		          </DropdownMenu>
 
 	          {appLinks.map((link) => (
 	            <Button
@@ -378,147 +518,129 @@ export function UnifiedHeaderClient({ session }: { session: Session }) {
         <div className="ml-auto flex items-center gap-2">
           <ModeToggle />
 
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="outline" size="sm" className="gap-2">
-                <Avatar className="h-6 w-6">
-                  <AvatarFallback className="text-[10px] font-semibold">
-                    {avatarFallback}
-                  </AvatarFallback>
-                </Avatar>
-                <span className="hidden sm:inline">{accountLabel}</span>
-                <span className="sm:hidden">Menu</span>
-              </Button>
-            </DropdownMenuTrigger>
-	            <DropdownMenuContent align="end" className="w-72">
-	              <DropdownMenuLabel className="space-y-1">
-	                <div className="text-sm font-medium">{accountLabel}</div>
-	                <div className="text-xs text-muted-foreground">
-	                  {session ? (
-	                    <span className="font-mono">{shortAddress(session.walletPubkey)}</span>
-	                  ) : walletProfileLoading ? (
-	                    <>Checking connected wallet…</>
-	                  ) : walletProfile ? (
-	                    <>Wallet recognized — sign in to manage your inbox.</>
-	                  ) : (
-	                    <>Sign in to manage your inbox.</>
-	                  )}
-	                </div>
-	              </DropdownMenuLabel>
-
-              <DropdownMenuSeparator />
-
-              <DropdownMenuItem asChild className="cursor-pointer">
-                <Link href="/dashboard">
-                  <LayoutDashboard className="h-4 w-4" aria-hidden="true" />
-                  Dashboard
-                </Link>
-              </DropdownMenuItem>
-              <DropdownMenuItem asChild className="cursor-pointer">
-                <Link href="/inbox">
-                  <Inbox className="h-4 w-4" aria-hidden="true" />
-                  Inbox
-                </Link>
-              </DropdownMenuItem>
-
-	              {session ? (
-	                <DropdownMenuItem asChild className="cursor-pointer">
-	                  <Link href={`/u/${encodeURIComponent(session.handle)}`}>
-	                    <SquareArrowOutUpRight className="h-4 w-4" aria-hidden="true" />
-	                    Public page
-	                  </Link>
-	                </DropdownMenuItem>
-	              ) : walletProfile ? (
-	                <DropdownMenuItem asChild className="cursor-pointer">
-	                  <Link href={`/u/${encodeURIComponent(walletProfile.handle)}`}>
-	                    <SquareArrowOutUpRight className="h-4 w-4" aria-hidden="true" />
-	                    Public page
-	                  </Link>
-	                </DropdownMenuItem>
-	              ) : null}
-
-              <DropdownMenuSeparator />
-
-              <DropdownMenuLabel className="text-xs text-muted-foreground">
-                Wallet
-              </DropdownMenuLabel>
-              <div className="px-2 pb-2 text-xs text-muted-foreground">
-                {connectedAddress ? (
-                  <div className="break-all font-mono" title={connectedAddress}>
-                    {shortAddress(connectedAddress)}
+          {session ? (
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="outline" size="sm" className="gap-2">
+                  <Avatar className="h-6 w-6">
+                    <AvatarFallback className="text-[10px] font-semibold">
+                      {avatarFallback}
+                    </AvatarFallback>
+                  </Avatar>
+                  <span className="hidden sm:inline">{accountLabel}</span>
+                  <span className="sm:hidden">Menu</span>
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-72">
+                <DropdownMenuLabel className="space-y-1">
+                  <div className="text-sm font-medium">{accountLabel}</div>
+                  <div className="font-mono text-xs text-muted-foreground">
+                    {shortAddress(session.walletPubkey)}
                   </div>
-                ) : (
-                  <div>Not connected</div>
-                )}
-              </div>
+                </DropdownMenuLabel>
 
-              <DropdownMenuItem
-                className="cursor-pointer"
-                onClick={() => setVisible(true)}
-              >
-                <Wallet className="h-4 w-4" aria-hidden="true" />
-                {connected ? "Change wallet" : "Connect wallet"}
-              </DropdownMenuItem>
+                <DropdownMenuSeparator />
 
-              {connected ? (
+                <DropdownMenuItem asChild className="cursor-pointer">
+                  <Link href="/dashboard">
+                    <LayoutDashboard className="h-4 w-4" aria-hidden="true" />
+                    Dashboard
+                  </Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem asChild className="cursor-pointer">
+                  <Link href="/inbox">
+                    <Inbox className="h-4 w-4" aria-hidden="true" />
+                    Inbox
+                  </Link>
+                </DropdownMenuItem>
+
+                <DropdownMenuItem asChild className="cursor-pointer">
+                  <Link href={`/u/${encodeURIComponent(session.handle)}`}>
+                    <SquareArrowOutUpRight className="h-4 w-4" aria-hidden="true" />
+                    Public page
+                  </Link>
+                </DropdownMenuItem>
+
+                <DropdownMenuSeparator />
+
+                <DropdownMenuLabel className="text-xs text-muted-foreground">
+                  Wallet
+                </DropdownMenuLabel>
+                <div className="px-2 pb-2 text-xs text-muted-foreground">
+                  {connectedAddress ? (
+                    <div className="break-all font-mono" title={connectedAddress}>
+                      {shortAddress(connectedAddress)}
+                    </div>
+                  ) : (
+                    <div>Not connected</div>
+                  )}
+                </div>
+
+                <DropdownMenuItem className="cursor-pointer" onClick={() => setVisible(true)}>
+                  <Wallet className="h-4 w-4" aria-hidden="true" />
+                  {connected ? "Change wallet" : "Connect wallet"}
+                </DropdownMenuItem>
+
+                {connected ? (
+                  <DropdownMenuItem
+                    className="cursor-pointer"
+                    disabled={signingOut}
+                    onClick={() => void runSignOut({ disconnectWallet: true })}
+                  >
+                    <Unplug className="h-4 w-4" aria-hidden="true" />
+                    Disconnect wallet
+                  </DropdownMenuItem>
+                ) : null}
+
                 <DropdownMenuItem
                   className="cursor-pointer"
                   disabled={signingOut}
-                  onClick={() =>
-                    session
-                      ? void runSignOut({ disconnectWallet: true })
-                      : void disconnect().catch(() => {})
-                  }
+                  onClick={() => void runSignOut({ disconnectWallet: true })}
                 >
-                  <Unplug className="h-4 w-4" aria-hidden="true" />
-                  Disconnect wallet
+                  <LogOut className="h-4 w-4" aria-hidden="true" />
+                  {signingOut ? "Signing out…" : "Sign out (disconnect wallet)"}
                 </DropdownMenuItem>
-              ) : null}
-
-	              {session ? (
-	                <>
-	                  <DropdownMenuItem
-	                    className="cursor-pointer"
-	                    disabled={signingOut}
-	                    onClick={() => void runSignOut({ disconnectWallet: true })}
-	                  >
-	                    <LogOut className="h-4 w-4" aria-hidden="true" />
-	                    {signingOut ? "Signing out…" : "Sign out (disconnect wallet)"}
-	                  </DropdownMenuItem>
-	                </>
-	              ) : (
-	                <>
-	                  <DropdownMenuSeparator />
-	                  <DropdownMenuItem asChild className="cursor-pointer">
-	                    <Link
-	                      href={
-	                        walletProfile?.handle
-	                          ? `/owner-signin?handle=${encodeURIComponent(walletProfile.handle)}`
-	                          : "/owner-signin"
-	                      }
-	                    >
-	                      <Sparkles className="h-4 w-4" aria-hidden="true" />
-	                      {walletProfile?.handle ? "Sign in" : "Claim a handle"}
-	                    </Link>
-	                  </DropdownMenuItem>
-	                </>
-	              )}
-            </DropdownMenuContent>
-          </DropdownMenu>
-
-	          {!session ? (
-	            <Button asChild variant="outline" size="sm" className="hidden sm:inline-flex">
-	              <Link
-	                href={
-	                  walletProfile?.handle
-	                    ? `/owner-signin?handle=${encodeURIComponent(walletProfile.handle)}`
-	                    : "/owner-signin"
-	                }
-	              >
-	                {walletProfile?.handle ? "Sign in" : "Claim a handle"}
-	              </Link>
-	            </Button>
-	          ) : null}
+              </DropdownMenuContent>
+            </DropdownMenu>
+          ) : !connectedAddress ? (
+            <Button
+              type="button"
+              variant="brand"
+              size="sm"
+              className="gap-2"
+              onClick={() => setVisible(true)}
+            >
+              <Wallet className="h-4 w-4" aria-hidden="true" />
+              <span className="hidden sm:inline">Connect wallet</span>
+              <span className="sm:hidden">Connect</span>
+            </Button>
+          ) : walletProfileLoading ? (
+            <Button variant="outline" size="sm" disabled>
+              <span className="hidden sm:inline">Checking wallet…</span>
+              <span className="sm:hidden">Checking…</span>
+            </Button>
+          ) : walletProfile?.handle ? (
+            <Button
+              type="button"
+              variant="brand"
+              size="sm"
+              className="gap-2"
+              disabled={signingIn || !signMessage}
+              onClick={() => void runSignIn()}
+            >
+              <Sparkles className="h-4 w-4" aria-hidden="true" />
+              <span className="hidden sm:inline">Sign in @{walletProfile.handle}</span>
+              <span className="sm:hidden">Sign in</span>
+            </Button>
+          ) : (
+            <Button asChild variant="outline" size="sm" className="gap-2">
+              <Link href="/owner-signin">
+                <Sparkles className="h-4 w-4" aria-hidden="true" />
+                <span className="hidden sm:inline">Claim a handle</span>
+                <span className="sm:hidden">Claim</span>
+              </Link>
+            </Button>
+          )}
 
           <Button asChild variant="brand" size="sm" className="hidden sm:inline-flex">
             <Link href="/ping">Send a ping</Link>

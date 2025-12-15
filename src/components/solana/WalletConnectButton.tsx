@@ -2,9 +2,9 @@
 
 import { useMemo } from "react";
 import { useWallet } from "@solana/wallet-adapter-react";
-import { useWalletModal } from "@solana/wallet-adapter-react-ui";
 
 import { Button } from "@/components/ui/button";
+import { useWalletModal } from "@/components/solana/WalletModal";
 
 function shortAddress(address: string) {
   if (address.length <= 12) return address;
@@ -49,4 +49,3 @@ export function WalletConnectButton() {
     </div>
   );
 }
-

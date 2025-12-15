@@ -5,12 +5,12 @@ import BigNumber from "bignumber.js";
 import QRCode from "react-qr-code";
 import { PublicKey } from "@solana/web3.js";
 import { useConnection, useWallet } from "@solana/wallet-adapter-react";
-import { useWalletModal } from "@solana/wallet-adapter-react-ui";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
+import { useWalletModal } from "@/components/solana/WalletModal";
 import {
   Sheet,
   SheetContent,

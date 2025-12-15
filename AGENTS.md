@@ -344,7 +344,8 @@ Select **one** backend stack (Drizzle+Supabase or Convex) per project by default
 ## Core Commands
 
 - Install: `pnpm install`
-- Dev (Next.js): `pnpm dev`
+- Dev (Next.js + Convex): `pnpm dev`
+- Dev (Next.js only): `pnpm dev:web`
 - Dev (Convex): `pnpm convex:dev`
 - Convex codegen: `pnpm convex:codegen`
 - Convex deploy: `pnpm convex:deploy`
@@ -399,7 +400,7 @@ Middleware:
 - **Bazaar discovery**: `src/app/api/x402/discovery/resources/route.ts` proxies facilitator discovery listings for UI/debug tooling.
 - **Solana Pay checkout**: `src/app/api/solana-pay/ping-intents/*` creates a Solana Pay transfer request URL based on the same x402-derived payment requirements (mint + amount + payTo), tracks the payment intent in Convex, confirms payment by finding the `reference` signature and validating the on-chain token balance delta, then consumes the intent to create the message.
 - **Creator sessions**: `src/app/(auth)/owner-signin/page.tsx` signs a message that includes the selected handle. `src/app/api/auth/*` verifies it, claims the handle in Convex, and sets an HttpOnly session cookie via `src/lib/auth/ownerSession.ts`. `src/app/(app)/layout.tsx` requires that session for the dashboard and inbox.
-- **Solana wallet UX**: `src/components/solana/SolanaProvider.tsx` is mounted in `src/app/layout.tsx` so the marketing/auth header can expose wallet connect state and reuse the same wallet modal across routes.
+- **Solana wallet UX**: `src/components/solana/SolanaProvider.tsx` is mounted in `src/app/layout.tsx` so the marketing/auth header can expose wallet connect state and reuse the shared wallet modal (`src/components/solana/WalletModal.tsx`) across routes.
 - **Site metadata / SEO**: `src/lib/config/site.ts` centralizes the canonical site URL for absolute links used by `src/app/robots.ts`, `src/app/sitemap.ts`, and `src/app/(marketing)/u/[handle]/opengraph-image.tsx`.
 - **Environment variables**: `.env.example` documents required variables; Convex writes `NEXT_PUBLIC_CONVEX_URL` + `CONVEX_DEPLOYMENT` to `.env.local`. `CONVEX_RESET_TOKEN` (and optional `CONVEX_RESET_BATCH`) protect and tune `pnpm convex:reset`. `NEXT_PUBLIC_SITE_URL` configures absolute URLs used by metadata routes (falls back to `VERCEL_URL` or `http://localhost:3000`). x402 uses `X402_NETWORK` (Solana CAIP-2 chain id) plus `X402_FACILITATOR_URL` (testnet facilitator). Creator sessions require `PING402_JWT_SECRET`.
 - **Styling / UI**: Tailwind CSS v4 tokens are defined in `src/styles/globals.css` (including brand accents + light/dark CSS variables) along with shared typography/layout utilities like `container-page`, `h1–h4`, `lead`, and `muted`. Theme switching uses `next-themes` via `src/components/theme/ThemeProvider.tsx`, with `src/components/theme/ModeToggle.tsx` exposed in the header UI. shadcn-style primitives live under `src/components/ui/**`, toasts use `src/components/ui/sonner.tsx`, the creator workspace shell lives in `src/components/layout/AppShellClient.tsx`, and tables use the reusable `@tanstack/react-table`-based `src/components/data-display/DataTable.tsx` (used by the inbox).
