@@ -15,7 +15,8 @@
     "convex:codegen": "convex codegen --typecheck disable",
     "convex:dev": "node ./scripts/convex-dev.cjs",
     "convex:deploy": "npx convex deploy -y",
-    "convex:redeploy": "pnpm run convex:deploy && pnpm run convex:dev"
+    "convex:redeploy": "pnpm run convex:deploy && pnpm run convex:dev",
+    "convex:reset": "tsx scripts/reset-convex.ts"
   },
   "dependencies": {
     "@convex-dev/rate-limiter": "^0.3.2",

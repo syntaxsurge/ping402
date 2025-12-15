@@ -51,3 +51,7 @@ Open:
 - `http://localhost:3000/inbox` (creator inbox; requires creator session)
 - `http://localhost:3000/inbox/[messageId]` (creator message detail; requires creator session)
 - `http://localhost:3000/api/health` (health check)
+
+## Reset Convex (optional)
+
+`pnpm convex:reset` truncates all Convex tables for the current deployment. Set `CONVEX_RESET_TOKEN` in `.env.local` before running it.
