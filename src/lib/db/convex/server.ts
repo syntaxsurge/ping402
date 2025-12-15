@@ -90,10 +90,57 @@ export async function setMessageStatusForHandle(input: {
   });
 }
 
+export async function setBadgeTxSigForHandle(input: {
+  handle: string;
+  messageId: Id<"messages">;
+  badgeTxSig: string;
+}) {
+  return await getClient().mutation(api.messages.setBadgeTxSigForHandle, input);
+}
+
+export async function getPublicReceiptById(input: { messageId: Id<"messages"> }) {
+  return await getClient().query(api.messages.getPublicReceiptById, input);
+}
+
 export async function storeAuthNonce(input: { nonce: string; createdAt: number }) {
   return await getClient().mutation(api.auth.storeNonce, input);
 }
 
 export async function consumeAuthNonce(input: { nonce: string }) {
   return await getClient().mutation(api.auth.consumeNonce, input);
+}
+
+export async function createSolanaPayPingIntent(input: {
+  toHandle: string;
+  tier: "standard" | "priority" | "vip";
+  body: string;
+  senderName?: string;
+  senderContact?: string;
+  reference: string;
+  assetDecimals: number;
+  x402Network: string;
+  x402Scheme: string;
+  x402Version: number;
+  x402Asset: string;
+  x402Amount: string;
+  x402PayTo: string;
+}) {
+  return await getClient().mutation(api.solanaPay.createPingIntent, input);
+}
+
+export async function getSolanaPayPingIntent(input: { intentId: Id<"solanaPayIntents"> }) {
+  return await getClient().query(api.solanaPay.getPingIntent, input);
+}
+
+export async function markSolanaPayPingIntentConfirmed(input: {
+  intentId: Id<"solanaPayIntents">;
+  payer: string;
+  paymentTxSig: string;
+  paymentSignatureB64: string;
+}) {
+  return await getClient().mutation(api.solanaPay.markPingIntentConfirmed, input);
+}
+
+export async function consumeSolanaPayPingIntent(input: { intentId: Id<"solanaPayIntents"> }) {
+  return await getClient().mutation(api.solanaPay.consumePingIntent, input);
 }

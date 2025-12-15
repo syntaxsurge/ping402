@@ -16,7 +16,8 @@
     "convex:dev": "node ./scripts/convex-dev.cjs",
     "convex:deploy": "npx convex deploy -y",
     "convex:redeploy": "pnpm run convex:deploy && pnpm run convex:dev",
-    "convex:reset": "dotenv -e .env -e .env.local -- tsx scripts/reset-convex.ts"
+    "convex:reset": "dotenv -e .env -e .env.local -- tsx scripts/reset-convex.ts",
+    "solana:create-badge-mint": "dotenv -e .env -e .env.local -- tsx scripts/solana/create-badge-mint.ts"
   },
   "dependencies": {
     "@coinbase/x402": "^2.0.0",
@@ -28,6 +29,8 @@
     "@radix-ui/react-label": "^2.1.8",
     "@radix-ui/react-separator": "^1.1.8",
     "@radix-ui/react-slot": "^1.2.4",
+    "@solana/pay": "^0.2.6",
+    "@solana/spl-token": "^0.4.14",
     "@solana/wallet-adapter-base": "^0.9.27",
     "@solana/wallet-adapter-phantom": "^0.9.28",
     "@solana/wallet-adapter-react": "^0.15.39",
@@ -41,6 +44,7 @@
     "@x402/paywall": "2.0.0",
     "@x402/svm": "2.0.0",
     "bad-words": "^4.0.0",
+    "bignumber.js": "^9.3.1",
     "bs58": "^6.0.0",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",

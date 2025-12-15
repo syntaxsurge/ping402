@@ -15,6 +15,7 @@ import type * as lib_messagePolicy from "../lib/messagePolicy.js";
 import type * as lib_rateLimiter from "../lib/rateLimiter.js";
 import type * as messages from "../messages.js";
 import type * as profiles from "../profiles.js";
+import type * as solanaPay from "../solanaPay.js";
 
 import type {
   ApiFromModules,
@@ -30,6 +31,7 @@ declare const fullApi: ApiFromModules<{
   "lib/rateLimiter": typeof lib_rateLimiter;
   messages: typeof messages;
   profiles: typeof profiles;
+  solanaPay: typeof solanaPay;
 }>;
 
 /**

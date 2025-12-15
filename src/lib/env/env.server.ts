@@ -29,6 +29,12 @@ const SolanaPublicKeyString = z.preprocess((value) => {
   return value.trim();
 }, z.string().refine(isSolanaPublicKey, "Invalid Solana public key."));
 
+const OptionalSolanaPublicKeyString = z.preprocess((value) => {
+  if (typeof value !== "string") return value;
+  const trimmed = value.trim();
+  return trimmed.length === 0 ? undefined : trimmed;
+}, z.string().refine(isSolanaPublicKey, "Invalid Solana public key.").optional());
+
 const ServerEnvSchema = z.object({
   NEXT_PUBLIC_CONVEX_URL: UrlString,
 
@@ -39,11 +45,18 @@ const ServerEnvSchema = z.object({
     v.replace(/\/$/, ""),
   ),
 
+  SOLANA_RPC_URL: UrlString.optional(),
+  SOLANA_WS_URL: UrlString.optional(),
+
   CDP_API_KEY_ID: OptionalNonEmptyString.pipe(z.string().min(1).optional()),
   CDP_API_KEY_SECRET: OptionalNonEmptyString.pipe(z.string().min(1).optional()),
 
   PING402_JWT_SECRET: z.string().min(32),
   PING402_CLAIM_PAY_TO_WALLET: SolanaPublicKeyString,
+
+  PING402_BADGE_MINT: OptionalSolanaPublicKeyString,
+  PING402_BADGE_AUTHORITY_SECRET_KEY: OptionalNonEmptyString.pipe(z.string().min(1).optional()),
+  PING402_BADGE_AUTHORITY_KEYPAIR_PATH: OptionalNonEmptyString.pipe(z.string().min(1).optional()),
 })
 .superRefine((env, ctx) => {
   const needsCdpKeys = env.X402_FACILITATOR_URL === "https://api.cdp.coinbase.com/platform/v2/x402";
@@ -61,6 +74,29 @@ const ServerEnvSchema = z.object({
       code: z.ZodIssueCode.custom,
       path: ["CDP_API_KEY_SECRET"],
       message: "CDP_API_KEY_SECRET is required when using the CDP facilitator.",
+    });
+  }
+
+  const badgeConfigured =
+    Boolean(env.PING402_BADGE_MINT) ||
+    Boolean(env.PING402_BADGE_AUTHORITY_SECRET_KEY) ||
+    Boolean(env.PING402_BADGE_AUTHORITY_KEYPAIR_PATH);
+
+  if (badgeConfigured && !env.PING402_BADGE_MINT) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      path: ["PING402_BADGE_MINT"],
+      message:
+        "PING402_BADGE_MINT is required when configuring supporter badges.",
+    });
+  }
+
+  if (badgeConfigured && !env.PING402_BADGE_AUTHORITY_SECRET_KEY && !env.PING402_BADGE_AUTHORITY_KEYPAIR_PATH) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      path: ["PING402_BADGE_AUTHORITY_SECRET_KEY"],
+      message:
+        "Set PING402_BADGE_AUTHORITY_SECRET_KEY (recommended) or PING402_BADGE_AUTHORITY_KEYPAIR_PATH to mint supporter badges.",
     });
   }
 });

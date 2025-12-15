@@ -9,6 +9,7 @@ import { getProfileByHandle } from "@/lib/db/convex/server";
 import {
   createPaidMessageForHandle,
   markMessagePaidForHandleSettled,
+  setBadgeTxSigForHandle,
 } from "@/lib/db/convex/server";
 import { getX402PaywallConfig, getX402PaywallProvider } from "@/lib/x402/paywall";
 import {
@@ -19,6 +20,7 @@ import {
 import { getX402Server } from "@/lib/x402/server";
 import { logger } from "@/lib/observability/logger";
 import { getPingTierConfig, PingTierSchema, type PingTier } from "@/lib/ping/tiers";
+import { mintSupporterBadge } from "@/lib/solana/badges";
 import { getErrorCode, getErrorData } from "@/lib/utils/errorData";
 import { parseHandle } from "@/lib/utils/handles";
 
@@ -127,6 +129,7 @@ const handler = async (req: NextRequest) => {
     if (wantsHtml) {
       const redirectUrl = new URL(`/u/${encodeURIComponent(body.to)}`, req.nextUrl.origin);
       redirectUrl.searchParams.set("sent", "1");
+      redirectUrl.searchParams.set("r", result.messageId);
       const res = NextResponse.redirect(redirectUrl, 303);
       res.headers.set("x-ping402-message-id", result.messageId);
       return res;
@@ -306,6 +309,35 @@ export async function POST(req: NextRequest) {
           messageId: messageId as Id<"messages">,
           paymentTxSig: txSig,
         });
+
+        const paymentSignatureB64 = getPaymentSignatureHeader(req.headers);
+        if (paymentSignatureB64) {
+          try {
+            const parsedPayment = parsePaymentSignatureHeader(paymentSignatureB64);
+            const minted = await mintSupporterBadge({
+              recipientWallet: parsedPayment.tokenPayer,
+              memo: `ping402:badge:${messageId}`,
+            });
+
+            if (minted.ok) {
+              await setBadgeTxSigForHandle({
+                handle: toHandle,
+                messageId: messageId as Id<"messages">,
+                badgeTxSig: minted.signature,
+              });
+
+              const location = res.headers.get("location");
+              if (location) {
+                const url = new URL(location, req.nextUrl.origin);
+                url.searchParams.set("badgeTx", minted.signature);
+                res.headers.set("location", url.toString());
+              }
+              res.headers.set("x-ping402-badge-tx", minted.signature);
+            }
+          } catch (err: unknown) {
+            logger.warn({ requestId, err }, "ping402.badges.mint_failed");
+          }
+        }
 
         const location = res.headers.get("location");
         if (location) {

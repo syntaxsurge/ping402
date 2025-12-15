@@ -9,6 +9,8 @@ const MessageStatus = v.union(
   v.literal("archived"),
 );
 
+const SolanaPayIntentStatus = v.union(v.literal("pending"), v.literal("confirmed"), v.literal("consumed"));
+
 export default defineSchema({
   profiles: defineTable({
     handle: v.string(),
@@ -30,6 +32,7 @@ export default defineSchema({
     payer: v.string(),
     paymentSignatureB64: v.string(),
     paymentTxSig: v.optional(v.string()),
+    badgeTxSig: v.optional(v.string()),
     x402Network: v.optional(v.string()),
     x402Scheme: v.optional(v.string()),
     x402Version: v.optional(v.number()),
@@ -60,4 +63,29 @@ export default defineSchema({
     nonce: v.string(),
     createdAt: v.number(),
   }).index("by_nonce", ["nonce"]),
+
+  solanaPayIntents: defineTable({
+    toHandle: v.string(),
+    tier: Tier,
+    body: v.string(),
+    senderName: v.optional(v.string()),
+    senderContact: v.optional(v.string()),
+    reference: v.string(),
+    status: SolanaPayIntentStatus,
+    payer: v.optional(v.string()),
+    paymentTxSig: v.optional(v.string()),
+    paymentSignatureB64: v.optional(v.string()),
+    assetDecimals: v.number(),
+    x402Network: v.string(),
+    x402Scheme: v.string(),
+    x402Version: v.number(),
+    x402Asset: v.string(),
+    x402Amount: v.string(),
+    x402PayTo: v.string(),
+    createdAt: v.number(),
+    updatedAt: v.number(),
+    consumedMessageId: v.optional(v.id("messages")),
+  })
+    .index("by_reference", ["reference"])
+    .index("by_status_createdAt", ["status", "createdAt"]),
 });

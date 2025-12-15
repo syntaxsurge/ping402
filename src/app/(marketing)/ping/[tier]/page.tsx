@@ -11,6 +11,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { FundingCta } from "@/components/x402/FundingCta";
 import { PaymentSummaryCard } from "@/components/x402/PaymentSummaryCard";
+import { SolanaPayPingSheet } from "@/components/solana-pay/SolanaPayPingSheet";
 
 export const dynamic = "force-dynamic";
 
@@ -80,7 +81,7 @@ export default async function PingComposePage({
                 Go to a profile page and pick a tier to start.
               </p>
             ) : (
-              <form action={actionHref} method="POST" className="space-y-4">
+              <form id="ping-compose-form" action={actionHref} method="POST" className="space-y-4">
                 <input type="hidden" name="to" value={toHandle} />
 
                 <div className="space-y-2">
@@ -108,9 +109,17 @@ export default async function PingComposePage({
                   />
                 </div>
 
-                <Button type="submit" disabled={!recipient}>
-                  Pay & send ping
-                </Button>
+                <div className="flex flex-col gap-2 sm:flex-row">
+                  <Button type="submit" disabled={!recipient} className="sm:flex-1">
+                    Pay & send ping
+                  </Button>
+                  <SolanaPayPingSheet
+                    formId="ping-compose-form"
+                    toHandle={toHandle}
+                    tier={tier}
+                    disabled={!recipient}
+                  />
+                </div>
 
                 <p className="text-xs text-muted-foreground">
                   Submitting this form triggers an x402 (HTTP 402 Payment Required) paywall on

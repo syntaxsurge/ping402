@@ -44,10 +44,10 @@ export default async function UserProfilePage({
   searchParams,
 }: {
   params: Promise<{ handle: string }>;
-  searchParams: Promise<{ sent?: string; tx?: string }>;
+  searchParams: Promise<{ sent?: string; tx?: string; badgeTx?: string; r?: string }>;
 }) {
   const { handle } = await params;
-  const { sent, tx } = await searchParams;
+  const { sent, tx, badgeTx, r } = await searchParams;
 
   const decodedHandle = decodeURIComponent(handle);
   const normalizedHandle = parseHandle(decodedHandle);
@@ -101,9 +101,10 @@ export default async function UserProfilePage({
     );
   }
 
+  const needsEnv = Boolean(tx || badgeTx);
   const [stats, env] = await Promise.all([
     getInboxStatsForHandle({ handle: profile.handle }),
-    tx ? getEnvServer() : Promise.resolve(null),
+    needsEnv ? getEnvServer() : Promise.resolve(null),
   ]);
 
   const shareUrl = absoluteUrl(`/u/${encodeURIComponent(profile.handle)}`);
@@ -139,14 +140,12 @@ export default async function UserProfilePage({
           {sent ? (
             <p className="text-sm">
               Your ping was sent
-              {tx && env && isSolanaTxSignature(tx) ? (
+              {typeof r === "string" ? (
                 <>
                   {" "}
                   (<Link
                     className="text-primary underline-offset-4 hover:underline"
-                    href={solanaExplorerTxUrl(tx, env.X402_NETWORK)}
-                    target="_blank"
-                    rel="noreferrer"
+                    href={`/r/${encodeURIComponent(r)}`}
                   >
                     receipt
                   </Link>
@@ -155,6 +154,34 @@ export default async function UserProfilePage({
               ) : null}
               .
             </p>
+          ) : null}
+
+          {tx && env && isSolanaTxSignature(tx) ? (
+            <div className="text-xs text-muted-foreground">
+              Payment{" "}
+              <Link
+                className="text-primary underline-offset-4 hover:underline"
+                href={solanaExplorerTxUrl(tx, env.X402_NETWORK)}
+                target="_blank"
+                rel="noreferrer"
+              >
+                {tx}
+              </Link>
+            </div>
+          ) : null}
+
+          {badgeTx && env && isSolanaTxSignature(badgeTx) ? (
+            <div className="text-xs text-muted-foreground">
+              Badge{" "}
+              <Link
+                className="text-primary underline-offset-4 hover:underline"
+                href={solanaExplorerTxUrl(badgeTx, env.X402_NETWORK)}
+                target="_blank"
+                rel="noreferrer"
+              >
+                {badgeTx}
+              </Link>
+            </div>
           ) : null}
         </CardContent>
       </Card>
