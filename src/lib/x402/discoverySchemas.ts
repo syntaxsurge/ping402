@@ -42,14 +42,3 @@ export const PingSendOutputSchema = {
   required: ["ok", "messageId", "deduped", "tier", "toHandle", "payer", "requestId"],
   additionalProperties: false,
 } as const;
-
-export const X402DemoOutputSchema = {
-  type: "object",
-  properties: {
-    ok: { type: "boolean" },
-    requestId: { type: "string" },
-    message: { type: "string" },
-  },
-  required: ["ok", "requestId", "message"],
-  additionalProperties: false,
-} as const;

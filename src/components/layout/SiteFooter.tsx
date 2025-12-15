@@ -32,14 +32,11 @@ export function SiteFooter() {
         <div className="space-y-3">
           <div className="text-sm font-semibold">Product</div>
           <div className="grid gap-2 text-sm">
-            <Link className="text-muted-foreground hover:text-foreground" href="/how-it-works">
+            <Link className="text-muted-foreground hover:text-foreground" href="/#how-it-works">
               How it works
             </Link>
-            <Link className="text-muted-foreground hover:text-foreground" href="/fund">
+            <Link className="text-muted-foreground hover:text-foreground" href="/#funding">
               Funding
-            </Link>
-            <Link className="text-muted-foreground hover:text-foreground" href="/demo/x402">
-              x402 demo
             </Link>
             <Link className="text-muted-foreground hover:text-foreground" href="/#tiers">
               Tiers
@@ -58,6 +55,12 @@ export function SiteFooter() {
             </Link>
             <Link className="text-muted-foreground hover:text-foreground" href="/owner-signin">
               Claim a handle
+            </Link>
+            <Link className="text-muted-foreground hover:text-foreground" href="/dashboard">
+              Dashboard
+            </Link>
+            <Link className="text-muted-foreground hover:text-foreground" href="/inbox">
+              Inbox
             </Link>
             <Link className="text-muted-foreground hover:text-foreground" href="/api/health">
               Health check

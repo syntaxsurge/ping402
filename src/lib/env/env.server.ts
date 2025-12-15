@@ -1,6 +1,5 @@
 import "server-only";
 
-import bs58 from "bs58";
 import { z } from "zod";
 
 import { SOLANA_DEVNET_CHAIN_ID, SOLANA_MAINNET_CHAIN_ID } from "@/lib/solana/chain";
@@ -9,19 +8,6 @@ const UrlString = z.preprocess((value) => {
   if (typeof value !== "string") return value;
   return value.trim();
 }, z.string().url());
-
-function isSolanaPublicKey(address: string): boolean {
-  try {
-    return bs58.decode(address).length === 32;
-  } catch {
-    return false;
-  }
-}
-
-const SolanaPublicKeyString = z.preprocess((value) => {
-  if (typeof value !== "string") return value;
-  return value.trim();
-}, z.string().refine(isSolanaPublicKey, "Invalid Solana public key."));
 
 const ServerEnvSchema = z.object({
   NEXT_PUBLIC_CONVEX_URL: UrlString,
@@ -34,7 +20,6 @@ const ServerEnvSchema = z.object({
   ),
 
   PING402_JWT_SECRET: z.string().min(32),
-  PING402_CLAIM_PAY_TO_WALLET: SolanaPublicKeyString,
 });
 
 export type EnvServer = z.infer<typeof ServerEnvSchema>;

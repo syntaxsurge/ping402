@@ -7,47 +7,47 @@ One-liner: A paid inbox for Solana creators—powered by x402 paywalls and Solan
 - **Steps:**
   1. **Current page:** New browser tab — confirm the address bar is empty.
   2. **Navigate:** Open URL directly: `http://localhost:3000/` → lands on `/`.
-  3. **Current page:** `/` — confirm the hero shows **“ping402”** and the header shows **“Connect Wallet”**.
+  3. **Current page:** `/` — confirm the hero shows **“ping402”** and the header shows **“Send a ping”** plus an **Account** menu.
   4. **Action:** Click **“Toggle theme”** in the header → wait for the UI to switch.
   5. **Current page:** `/` — confirm the background/foreground colors visibly flip (light ↔ dark) while **“ping402”** remains on-screen.
-  6. **Action:** Click **“Connect Wallet”** in the header → in the wallet modal, click **“Phantom”** → approve the connection in Phantom.
-  7. **Verify on-screen:** The header wallet button updates to a truncated address (e.g., **“BuLAwn…BrAj”**) and a **“Disconnect”** option becomes available.
+  6. **Action:** Open the **Account** menu → click **“Connect wallet”** → select **“Phantom”** → approve the connection in Phantom.
+  7. **Verify on-screen:** Re-open the **Account** menu and confirm it shows a connected wallet address plus a **“Disconnect wallet”** option.
 - **Voiceover:**
   > “This is ping402—a paid inbox for creators on Solana. Right from the homepage, I can switch between light and dark mode and connect my Solana wallet in one click. The header stays consistent everywhere, so the user always knows where to start: send a ping, or sign in as a creator.”
 
 ## 2. How It Works: End-to-End x402 + Solana Payment Flow
-- **URL:** /how-it-works
-- **Shot:** “How it works” explainer page showing the end-to-end flow: paywalled access with x402, Solana settlement, and how the receipt + inbox are produced.
+- **URL:** /#how-it-works
+- **Shot:** Homepage explainer section showing the end-to-end flow: paywalled access with x402, Solana settlement, and how the receipt + inbox are produced.
 - **Steps:**
   1. **Current page:** `/` — confirm the header is visible and you’re still connected (wallet address is shown).
-  2. **Navigate:** Click **“How it works”** in the header → lands on `/how-it-works`.
-  3. **Current page:** `/how-it-works` — confirm the page heading shows **“How it works”**.
+  2. **Navigate:** Click **“How it works”** in the header → scrolls to `/#how-it-works`.
+  3. **Current page:** `/#how-it-works` — confirm the section heading shows **“How it works”**.
   4. **Action:** Scroll to the section that explains **x402 paywalled requests** → pause when the diagram/text describing the payment requirement is fully visible.
-  5. **Current page:** `/how-it-works` — confirm the section describing **Solana USDC settlement** is visible.
+  5. **Current page:** `/#how-it-works` — confirm the section describing **Solana USDC settlement** is visible.
   6. **Action:** Scroll to the part explaining the **receipt + creator inbox** lifecycle → pause on the part that mentions the user gets a receipt and the creator gets an inbox entry.
   7. **Verify on-screen:** The page clearly shows the end-to-end sequence: user → payment requirement → Solana payment → message delivered → receipt/inbox.
 - **Voiceover:**
   > “Before we even send anything, this page makes it crystal clear: ping402 is built on two pillars—x402 for paywalled access, and Solana for fast, cheap USDC settlement. The user pays to unlock delivery, the app produces a receipt, and the creator gets a real inbox workflow, not just a demo.”
 
 ## 3. Fund: Make Devnet Ready in Minutes (SOL + Devnet USDC)
-- **URL:** /fund
-- **Shot:** Funding guide page with step-by-step guidance for getting SOL and devnet USDC so the paywall and checkout can succeed in a demo.
+- **URL:** /#funding
+- **Shot:** Funding section with step-by-step guidance for getting SOL and devnet USDC so the paywall and checkout can succeed on devnet.
 - **Steps:**
-  1. **Current page:** `/how-it-works` — confirm the heading **“How it works”** is still visible.
-  2. **Navigate:** Click **“Fund”** in the header → lands on `/fund`.
-  3. **Current page:** `/fund` — confirm the page heading shows **“Fund”** (or **“Funding”**).
+  1. **Current page:** `/#how-it-works` — confirm the heading **“How it works”** is still visible.
+  2. **Navigate:** Click **“Funding”** in the header → scrolls to `/#funding`.
+  3. **Current page:** `/#funding` — confirm the section heading shows **“Funding”**.
   4. **Action:** Click the on-page link/button labeled **“Solana Faucet”** (or equivalent faucet link shown on the page) → confirm a faucet page opens in a new tab.
   5. **Current page:** Faucet tab — confirm you see a faucet UI that can request devnet SOL.
-  6. **Navigate:** Switch back to the `/fund` tab → confirm the **“Fund”** page heading is visible again.
-  7. **Verify on-screen:** The page clearly shows what you need for the demo: a funded wallet for devnet payments.
+  6. **Navigate:** Switch back to the `/#funding` tab → confirm the **“Funding”** heading is visible again.
+  7. **Verify on-screen:** The section clearly shows what you need: a funded wallet for devnet payments.
 - **Voiceover:**
-  > “For judges and first-time users, funding is usually the biggest blocker—so ping402 includes a dedicated funding guide. The goal is simple: get devnet SOL and devnet USDC so the user can complete a paid action immediately. Now we’re ready to actually use the app.”
+  > “For judges and first-time users, funding is usually the biggest blocker—so ping402 includes a clear funding section right on the homepage. The goal is simple: get devnet SOL and devnet USDC so the user can complete a paid action immediately. Now we’re ready to actually use the app.”
 
 ## 4. Handle Discovery: Search a Handle and Choose the Right Path
 - **URL:** /ping
 - **Shot:** Handle search page with a search input, results/suggestions, and clear CTAs to either view an inbox profile or start sending a ping.
 - **Steps:**
-  1. **Current page:** `/fund` — confirm the **“Fund”** heading is visible.
+  1. **Current page:** `/#funding` — confirm the **“Funding”** heading is visible.
   2. **Navigate:** Click **“Send a Ping”** in the header → lands on `/ping`.
   3. **Current page:** `/ping` — confirm the page heading shows **“Send a ping”** (or **“Ping”**).
   4. **Action:** Click the input labeled **“Handle”** (or **“Search handle”**) to focus it.
@@ -155,35 +155,20 @@ One-liner: A paid inbox for Solana creators—powered by x402 paywalls and Solan
 - **Voiceover:**
   > “Creators need a real workflow: not just receiving messages, but managing them. Here I open a message, mark it as replied, and the UI immediately reflects the new status. This is a complete lifecycle—from paid delivery to inbox triage—and it’s exactly what a consumer-facing Solana creator product should feel like.”
 
-## 11. x402 Demo + Discovery: Prove the Integration End-to-End
-- **URL:** /demo/x402
-- **Shot:** x402 inspection page showing decoded payment requirements, a discovery listing, and a live test against a paywalled API resource that returns “Payment Required” until paid.
-- **Steps:**
-  1. **Current page:** `/inbox` — confirm you see the inbox list.
-  2. **Navigate:** Click **“x402 Demo”** (or **“Demo”**) in the header → lands on `/demo/x402`.
-  3. **Current page:** `/demo/x402` — confirm the heading shows **“x402 demo”** (or **“x402 inspection”**) and you can see a panel for request/response details.
-  4. **Action:** Click **“Fetch demo resource”** (or equivalent button that triggers the demo call) → wait for the response panel to populate.
-  5. **Current page:** `/demo/x402` — confirm the response shows a **“Payment Required”** state and a summary of requirements (amount, asset, network).
-  6. **Navigate:** Open URL directly in a new tab: `http://localhost:3000/api/x402/discovery/resources` → confirm you see JSON that lists available paywalled resources.
-  7. **Navigate:** Switch back to `/demo/x402` → confirm the inspection UI is visible again.
-  8. **Action:** Click **“Open paywall”** (or click the demo API URL shown) → on the paywall screen, click **“Pay now”** → approve in wallet.
-  9. **Verify on-screen:** The demo resource switches from locked to unlocked (a visible success state like **“200 OK”** or **“Unlocked”** appears), proving x402 and Solana settlement are working together.
-- **Voiceover:**
-  > “This is the hackathon-critical proof: x402 isn’t an add-on—it’s the baseline. The demo endpoint returns Payment Required until the user pays in Solana USDC. We can even see a discovery listing of paywalled resources. After paying, the same resource becomes accessible immediately. That’s real x402 + Solana integration.”
-
-## 12. API + SEO Proof: Health, Handles, Robots, Sitemap, OpenGraph
+## 11. API + SEO Proof: Health, Handles, Robots, Sitemap, OpenGraph
 - **URL:** /api/health
 - **Shot:** A fast “ops + SEO” pass showing public endpoints, handle lookup/search APIs, robots/sitemap, and the dynamic OpenGraph image route.
 - **Steps:**
-  1. **Current page:** `/demo/x402` — confirm the x402 inspection UI is still visible.
+  1. **Current page:** `/inbox` — confirm you see the inbox list.
   2. **Navigate:** Open URL directly: `http://localhost:3000/api/health` → lands on `/api/health`.
   3. **Current page:** `/api/health` — confirm you see JSON with an OK status (e.g., `ok: true`).
   4. **Navigate:** Open URL directly: `http://localhost:3000/api/handles/search?query=ping` → confirm you see JSON results with handle suggestions.
   5. **Navigate:** Open URL directly: `http://localhost:3000/api/handles/lookup?handle=ping402` → confirm you see JSON indicating availability/ownership.
-  6. **Navigate:** Open URL directly: `http://localhost:3000/robots.txt` → confirm the response starts with **“User-agent:”**.
-  7. **Navigate:** Open URL directly: `http://localhost:3000/sitemap.xml` → confirm the response starts with **`<?xml`** and contains URLs.
-  8. **Navigate:** Open URL directly: `http://localhost:3000/u/ping402/opengraph-image` → confirm a social share image renders in the browser.
-  9. **Verify on-screen:** You’ve shown production-grade endpoints: health, discovery APIs, and SEO metadata routes—all functioning.
+  6. **Navigate:** Open URL directly: `http://localhost:3000/api/x402/discovery/resources` → confirm you see JSON that lists available paywalled resources.
+  7. **Navigate:** Open URL directly: `http://localhost:3000/robots.txt` → confirm the response starts with **“User-agent:”**.
+  8. **Navigate:** Open URL directly: `http://localhost:3000/sitemap.xml` → confirm the response starts with **`<?xml`** and contains URLs.
+  9. **Navigate:** Open URL directly: `http://localhost:3000/u/ping402/opengraph-image` → confirm a social share image renders in the browser.
+  10. **Verify on-screen:** You’ve shown production-grade endpoints: health, discovery APIs, and SEO metadata routes—all functioning.
 - **Voiceover:**
   > “To round it out, ping402 ships like a real production app: health checks, handle search and lookup APIs for onboarding UX, and proper SEO routes—robots, sitemap, and dynamic OpenGraph images for profile sharing. This is the polish that makes it feel alive and ready for mainnet.”
 
@@ -194,6 +179,6 @@ One-liner: A paid inbox for Solana creators—powered by x402 paywalls and Solan
   1. **Current page:** `/u/ping402/opengraph-image` — confirm the OpenGraph image is visible.
   2. **Navigate:** Open URL directly: `http://localhost:3000/dashboard` → lands on `/dashboard`.
   3. **Current page:** `/dashboard` — confirm the dashboard heading shows **“Dashboard”** and your handle (e.g., `@alex402`) is visible.
-  4. **Verify final state:** Confirm the header shows your connected wallet, the dashboard shows revenue/status cards, and the inbox is accessible via **“Inbox”** navigation.
+  4. **Verify final state:** Confirm the header menu shows your handle and wallet status, the dashboard shows revenue/status cards, and the inbox is accessible via **“Inbox”** navigation.
 - **Voiceover:**
   > “In this demo, we proved the full journey: users discover a handle, pay in Solana USDC, get a verifiable receipt, and creators manage a real inbox with revenue tracking. x402 powers the paywall baseline, Solana powers settlement, and the UI is built for real users. Try it at [DEMO_URL].”

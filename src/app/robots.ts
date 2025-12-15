@@ -7,7 +7,7 @@ export default function robots(): MetadataRoute.Robots {
     rules: [
       {
         userAgent: "*",
-        allow: ["/", "/how-it-works", "/u/"],
+        allow: ["/", "/u/"],
         disallow: ["/api/", "/inbox", "/dashboard", "/ping/"],
       },
     ],
@@ -15,4 +15,3 @@ export default function robots(): MetadataRoute.Robots {
     host: getSiteUrl(),
   };
 }
-

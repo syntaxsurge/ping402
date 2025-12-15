@@ -26,7 +26,6 @@ Paid inbox pings on Solana using x402 (HTTP 402 Payment Required), with messages
 3. Configure env vars:
 
    - `.env.example` and `.env.local` share the same keys. Set these required values in `.env.local`:
-     - `PING402_CLAIM_PAY_TO_WALLET` (required; pay-to address for the `/api/x402/demo` paywall)
      - `PING402_JWT_SECRET` (required; used for the creator HttpOnly session cookie; 32+ chars)
    - Optional:
      - `NEXT_PUBLIC_SITE_URL` (used for absolute URLs; on Vercel you can omit and rely on `VERCEL_URL`)

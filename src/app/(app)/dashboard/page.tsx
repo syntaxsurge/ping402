@@ -123,7 +123,7 @@ export default async function DashboardPage() {
             </ol>
             <div className="flex flex-wrap gap-2">
               <Button asChild variant="outline" size="sm">
-                <Link href="/how-it-works">Read how it works</Link>
+                <Link href="/#how-it-works">Read how it works</Link>
               </Button>
               <Button asChild size="sm">
                 <Link href="/inbox">Go to inbox</Link>

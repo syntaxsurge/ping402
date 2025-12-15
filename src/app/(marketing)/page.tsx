@@ -7,9 +7,17 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
+import { getOwnerSession } from "@/lib/auth/ownerSession";
 import { getPingTierConfig, PING_TIER_ORDER } from "@/lib/ping/tiers";
+import { getEnvServer } from "@/lib/env/env.server";
+import { isSolanaDevnet, solanaNetworkLabel } from "@/lib/solana/chain";
 
-export default function HomePage() {
+export default async function HomePage() {
+  const session = await getOwnerSession();
+  const env = getEnvServer();
+  const networkLabel = solanaNetworkLabel(env.X402_NETWORK);
+  const isDevnet = isSolanaDevnet(env.X402_NETWORK);
+
   return (
     <div className="space-y-24">
       <section className="pt-6">
@@ -30,17 +38,23 @@ export default function HomePage() {
               </p>
             </div>
 
-            <div className="flex flex-wrap gap-3">
-              <Button asChild variant="brand" size="lg">
-                <Link href="/ping">Send a ping</Link>
-              </Button>
-              <Button asChild variant="outline" size="lg">
-                <Link href="/how-it-works">How it works</Link>
-              </Button>
-              <Button asChild variant="ghost" size="lg">
-                <Link href="/owner-signin">Claim a handle</Link>
-              </Button>
-            </div>
+	            <div className="flex flex-wrap gap-3">
+	              <Button asChild variant="brand" size="lg">
+	                <Link href="/ping">Send a ping</Link>
+	              </Button>
+	              <Button asChild variant="outline" size="lg">
+	                <Link href="/#how-it-works">How it works</Link>
+	              </Button>
+	              {session ? (
+	                <Button asChild variant="ghost" size="lg">
+	                  <Link href="/inbox">Open inbox</Link>
+	                </Button>
+	              ) : (
+	                <Button asChild variant="ghost" size="lg">
+	                  <Link href="/owner-signin">Claim a handle</Link>
+	                </Button>
+	              )}
+	            </div>
 
             <HandleSearch />
           </div>
@@ -90,6 +104,76 @@ export default function HomePage() {
             </CardHeader>
           </Card>
         </div>
+      </section>
+
+      <section id="funding" className="scroll-mt-24 space-y-8">
+        <div className="space-y-2">
+          <div className="flex flex-wrap items-center gap-2">
+            <h2 className="h3">Funding</h2>
+            <Badge variant="secondary" className="capitalize">
+              {networkLabel}
+            </Badge>
+          </div>
+          <p className="muted">
+            You only pay when you send a ping. Keep enough balance for fees and the requested
+            token (shown at checkout).
+          </p>
+        </div>
+
+        <div className="grid gap-4 md:grid-cols-2">
+          <Card className="bg-card/60 backdrop-blur">
+            <CardHeader className="space-y-2">
+              <CardTitle className="text-base">Devnet</CardTitle>
+              <p className="text-sm text-muted-foreground">
+                Recommended for demos and testing. Use a faucet for devnet SOL.
+              </p>
+            </CardHeader>
+            <CardContent className="space-y-3 text-sm text-muted-foreground">
+              <p>
+                Faucet:{" "}
+                <a
+                  className="text-primary underline-offset-4 hover:underline"
+                  href="https://faucet.solana.com"
+                  target="_blank"
+                  rel="noreferrer"
+                >
+                  faucet.solana.com
+                </a>
+              </p>
+              {isDevnet ? (
+                <p className="text-xs">
+                  This environment is currently configured for devnet.
+                </p>
+              ) : (
+                <p className="text-xs">
+                  Switch your environment to devnet if you want faucet-funded testing.
+                </p>
+              )}
+            </CardContent>
+          </Card>
+
+          <Card className="bg-card/60 backdrop-blur">
+            <CardHeader className="space-y-2">
+              <CardTitle className="text-base">Mainnet</CardTitle>
+              <p className="text-sm text-muted-foreground">
+                For real users. Ensure you have SOL for fees and the required token balance.
+              </p>
+            </CardHeader>
+            <CardContent className="space-y-3 text-sm text-muted-foreground">
+              <p className="text-xs">
+                If you’re paying with a token (like a stablecoin), the paywall specifies the mint
+                and amount at checkout.
+              </p>
+              <p className="text-xs">
+                Tip: Keep a small SOL buffer so retries can settle cleanly.
+              </p>
+            </CardContent>
+          </Card>
+        </div>
+
+        <p className="text-xs text-muted-foreground">
+          Need more detail? Open the Funding section anytime from the top navigation.
+        </p>
       </section>
 
       <section className="space-y-8">
@@ -171,7 +255,7 @@ export default function HomePage() {
         <p className="text-xs text-muted-foreground">
           Tiers are enforced by a paywalled endpoint at{" "}
           <code className="rounded bg-muted px-1 py-0.5">/api/ping/send</code>.{" "}
-          <Link className="underline underline-offset-4" href="/how-it-works">
+          <Link className="underline underline-offset-4" href="/#how-it-works">
             Read the flow
           </Link>
           .
@@ -247,25 +331,37 @@ export default function HomePage() {
         </Accordion>
       </section>
 
-      <section className="rounded-xl border bg-card/60 p-8 backdrop-blur">
-        <div className="flex flex-col gap-6 md:flex-row md:items-center md:justify-between">
-          <div className="space-y-2">
-            <h2 className="h4">Ready to get started?</h2>
-            <p className="muted">
-              Find a creator inbox to send a paid ping, or claim your handle to start receiving
-              them.
-            </p>
-          </div>
-          <div className="flex flex-wrap gap-3">
-            <Button asChild variant="brand">
-              <Link href="/ping">Send a ping</Link>
-            </Button>
-            <Button asChild variant="outline">
-              <Link href="/owner-signin">Claim a handle</Link>
-            </Button>
-          </div>
-        </div>
-      </section>
-    </div>
-  );
+	      <section className="rounded-xl border bg-card/60 p-8 backdrop-blur">
+	        <div className="flex flex-col gap-6 md:flex-row md:items-center md:justify-between">
+	          <div className="space-y-2">
+	            <h2 className="h4">Ready to get started?</h2>
+	            <p className="muted">
+	              {session
+	                ? "Jump back into your inbox, or share your public page."
+	                : "Find a creator inbox to send a paid ping, or claim your handle to start receiving them."}
+	            </p>
+	          </div>
+	          <div className="flex flex-wrap gap-3">
+	            <Button asChild variant="brand">
+	              <Link href="/ping">Send a ping</Link>
+	            </Button>
+	            {session ? (
+	              <>
+	                <Button asChild variant="outline">
+	                  <Link href="/inbox">Open inbox</Link>
+	                </Button>
+	                <Button asChild variant="ghost">
+	                  <Link href={`/u/${encodeURIComponent(session.handle)}`}>View public page</Link>
+	                </Button>
+	              </>
+	            ) : (
+	              <Button asChild variant="outline">
+	                <Link href="/owner-signin">Claim a handle</Link>
+	              </Button>
+	            )}
+	          </div>
+	        </div>
+	      </section>
+	    </div>
+	  );
 }

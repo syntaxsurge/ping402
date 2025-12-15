@@ -27,10 +27,10 @@ export function FundingCta({
 
         <div className="flex flex-col gap-2 sm:flex-row">
           <Button asChild variant="secondary" className="w-full sm:w-auto">
-            <Link href="/fund">Funding guide</Link>
+            <Link href="/#funding">Funding</Link>
           </Button>
           <Button asChild variant="outline" className="w-full sm:w-auto">
-            <Link href="/demo/x402">Inspect x402 headers</Link>
+            <Link href="/#how-it-works">How it works</Link>
           </Button>
         </div>
       </CardContent>

@@ -7,7 +7,6 @@ export default function sitemap(): MetadataRoute.Sitemap {
 
   return [
     { url: absoluteUrl("/"), lastModified: now },
-    { url: absoluteUrl("/how-it-works"), lastModified: now },
     { url: absoluteUrl("/ping"), lastModified: now },
   ];
 }

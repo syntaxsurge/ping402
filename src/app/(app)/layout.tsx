@@ -2,25 +2,19 @@ import { redirect } from "next/navigation";
 import type { ReactNode } from "react";
 
 import { AppShellClient } from "@/components/layout/AppShellClient";
-import { clearOwnerSession, getOwnerSession } from "@/lib/auth/ownerSession";
+import { UnifiedHeader } from "@/components/layout/UnifiedHeader";
+import { getOwnerSession } from "@/lib/auth/ownerSession";
 
 export default async function AppLayout({ children }: { children: ReactNode }) {
   const session = await getOwnerSession();
   if (!session) redirect("/owner-signin");
 
-  async function signOut() {
-    "use server";
-    await clearOwnerSession();
-    redirect("/");
-  }
-
   return (
-    <AppShellClient
-      ownerHandle={session.handle}
-      walletPubkey={session.walletPubkey}
-      signOutAction={signOut}
-    >
-      {children}
-    </AppShellClient>
+    <div className="min-h-dvh bg-background [background-image:var(--brand-glow)] bg-no-repeat [background-position:top]">
+      <UnifiedHeader />
+      <div className="container-page py-10 sm:py-12">
+        <AppShellClient ownerHandle={session.handle}>{children}</AppShellClient>
+      </div>
+    </div>
   );
 }

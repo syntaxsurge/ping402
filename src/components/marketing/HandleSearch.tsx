@@ -222,7 +222,7 @@ export function HandleSearch({
                 </p>
                 <div className="flex flex-wrap gap-2">
                   <Button asChild size="sm" variant="ghost">
-                    <Link href="/how-it-works">How it works</Link>
+                    <Link href="/#how-it-works">How it works</Link>
                   </Button>
                   <Button asChild size="sm" variant="outline">
                     <Link href="/owner-signin">Creator sign-in</Link>

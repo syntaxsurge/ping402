@@ -7,7 +7,14 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 export const dynamic = "force-dynamic";
 
-export default function PingLandingPage() {
+export default async function PingLandingPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ query?: string }>;
+}) {
+  const { query } = await searchParams;
+  const defaultValue = typeof query === "string" ? query : "";
+
   return (
     <div className="mx-auto max-w-3xl space-y-8">
       <header className="space-y-3">
@@ -23,7 +30,7 @@ export default function PingLandingPage() {
         </p>
       </header>
 
-      <HandleSearch />
+      <HandleSearch defaultValue={defaultValue} />
 
       <Card className="bg-card/60 backdrop-blur">
         <CardHeader className="space-y-2">
@@ -39,7 +46,7 @@ export default function PingLandingPage() {
               <Link href="/owner-signin">Creator sign-in</Link>
             </Button>
             <Button asChild variant="ghost" size="sm">
-              <Link href="/how-it-works">How it works</Link>
+              <Link href="/#how-it-works">How it works</Link>
             </Button>
           </div>
         </CardContent>

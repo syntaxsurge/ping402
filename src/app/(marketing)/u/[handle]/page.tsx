@@ -80,7 +80,7 @@ export default async function UserProfilePage({
                 <Link href="/ping">Find a creator</Link>
               </Button>
               <Button asChild variant="ghost">
-                <Link href="/how-it-works">How it works</Link>
+                <Link href="/#how-it-works">How it works</Link>
               </Button>
             </div>
             <p className="text-xs text-muted-foreground">
@@ -194,7 +194,7 @@ export default async function UserProfilePage({
         </div>
         <p className="text-xs text-muted-foreground">
           Sending a ping requires an x402-priced Solana payment.{" "}
-          <Link className="underline underline-offset-4" href="/how-it-works">
+          <Link className="underline underline-offset-4" href="/#how-it-works">
             Learn how it works
           </Link>
           .
