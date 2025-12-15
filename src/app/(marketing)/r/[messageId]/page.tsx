@@ -33,11 +33,6 @@ export default async function ReceiptPage({
       ? solanaExplorerTxUrl(receipt.paymentTxSig, env.X402_NETWORK)
       : null;
 
-  const badgeExplorerUrl =
-    receipt.badgeTxSig && isSolanaTxSignature(receipt.badgeTxSig)
-      ? solanaExplorerTxUrl(receipt.badgeTxSig, env.X402_NETWORK)
-      : null;
-
   return (
     <div className="mx-auto max-w-2xl space-y-6">
       <header className="space-y-2">
@@ -47,8 +42,7 @@ export default async function ReceiptPage({
           <Badge variant="outline">{receipt.tier}</Badge>
         </div>
         <p className="text-sm text-muted-foreground">
-          Verifiable on-chain proof that a ping was paid for, plus the optional supporter badge
-          mint.
+          Verifiable on-chain proof that a ping was paid for.
         </p>
       </header>
 
@@ -85,30 +79,6 @@ export default async function ReceiptPage({
               <div className="text-xs text-muted-foreground">Pending settlement.</div>
             )}
           </div>
-
-          <Separator />
-
-          <div className="space-y-1">
-            <div className="text-muted-foreground">Supporter badge mint</div>
-            {receipt.badgeTxSig ? (
-              badgeExplorerUrl ? (
-                <Link
-                  className="break-all font-mono text-xs text-primary underline-offset-4 hover:underline"
-                  href={badgeExplorerUrl}
-                  target="_blank"
-                  rel="noreferrer"
-                >
-                  {receipt.badgeTxSig}
-                </Link>
-              ) : (
-                <div className="break-all font-mono text-xs">{receipt.badgeTxSig}</div>
-              )
-            ) : (
-              <div className="text-xs text-muted-foreground">
-                Badge not minted (or still processing).
-              </div>
-            )}
-          </div>
         </CardContent>
       </Card>
 
@@ -136,4 +106,3 @@ export default async function ReceiptPage({
     </div>
   );
 }
-

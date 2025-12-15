@@ -341,46 +341,6 @@ export const setStatusForHandle = mutation({
   },
 });
 
-export const setBadgeTxSigForHandle = mutation({
-  args: {
-    handle: v.string(),
-    messageId: v.id("messages"),
-    badgeTxSig: v.string(),
-  },
-  handler: async (ctx, args) => {
-    const handle = normalizeHandle(args.handle);
-    assertValidHandle(handle);
-
-    const profile = await ctx.db
-      .query("profiles")
-      .withIndex("by_handle", (q) => q.eq("handle", handle))
-      .unique();
-
-    if (!profile) {
-      throw new ConvexError("Recipient not found.");
-    }
-
-    const message = await ctx.db.get(args.messageId);
-    if (!message) {
-      throw new ConvexError("Message not found.");
-    }
-    if (message.toProfileId !== profile._id) {
-      throw new ConvexError("Message not found.");
-    }
-
-    if (message.badgeTxSig) {
-      return { updated: false };
-    }
-
-    await ctx.db.patch(message._id, {
-      badgeTxSig: args.badgeTxSig,
-      updatedAt: Date.now(),
-    });
-
-    return { updated: true };
-  },
-});
-
 export const getPublicReceiptById = query({
   args: { messageId: v.id("messages") },
   handler: async (ctx, args) => {
@@ -396,7 +356,6 @@ export const getPublicReceiptById = query({
       tier: message.tier,
       payer: message.payer,
       paymentTxSig: message.paymentTxSig ?? null,
-      badgeTxSig: message.badgeTxSig ?? null,
       priceCents: message.priceCents,
       createdAt: message.createdAt,
       x402Network: message.x402Network ?? null,

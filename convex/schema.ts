@@ -32,7 +32,6 @@ export default defineSchema({
     payer: v.string(),
     paymentSignatureB64: v.string(),
     paymentTxSig: v.optional(v.string()),
-    badgeTxSig: v.optional(v.string()),
     x402Network: v.optional(v.string()),
     x402Scheme: v.optional(v.string()),
     x402Version: v.optional(v.number()),

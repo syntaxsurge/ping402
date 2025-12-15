@@ -47,8 +47,6 @@ type ConsumeResponse = {
   messageId: string;
   redirectUrl: string;
   paymentTxSig: string | null;
-  badgeTxSig: string | null;
-  badgeError: string | null;
 };
 
 export function SolanaPayPingSheet({

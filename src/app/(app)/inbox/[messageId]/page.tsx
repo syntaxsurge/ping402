@@ -70,11 +70,6 @@ export default async function MessageDetailPage({
   const paymentTxSig = message.paymentTxSig ?? null;
   const hasReceipt = Boolean(paymentTxSig && isSolanaTxSignature(paymentTxSig));
   const explorerUrl = hasReceipt ? solanaExplorerTxUrl(paymentTxSig!, env.X402_NETWORK) : null;
-  const badgeTxSig = message.badgeTxSig ?? null;
-  const badgeExplorerUrl =
-    badgeTxSig && isSolanaTxSignature(badgeTxSig)
-      ? solanaExplorerTxUrl(badgeTxSig, env.X402_NETWORK)
-      : null;
 
   return (
     <div className="space-y-8">
@@ -145,26 +140,6 @@ export default async function MessageDetailPage({
               <div className="mt-1 font-mono text-xs text-muted-foreground">
                 {paymentTxSig ?? "pending"}
               </div>
-              {badgeTxSig ? (
-                <div className="mt-4 space-y-1">
-                  <div className="text-xs font-medium text-muted-foreground">Supporter badge</div>
-                  {badgeExplorerUrl ? (
-                    <Link
-                      className="text-primary underline-offset-4 hover:underline"
-                      href={badgeExplorerUrl}
-                      target="_blank"
-                      rel="noreferrer"
-                    >
-                      View badge mint on Solana Explorer
-                    </Link>
-                  ) : (
-                    <span className="text-muted-foreground">Badge receipt unavailable.</span>
-                  )}
-                  <div className="font-mono text-xs text-muted-foreground">
-                    {badgeTxSig}
-                  </div>
-                </div>
-              ) : null}
               {message.x402Network || message.x402Scheme || message.x402Version ? (
                 <div className="mt-2 text-xs text-muted-foreground">
                   {message.x402Network ? (

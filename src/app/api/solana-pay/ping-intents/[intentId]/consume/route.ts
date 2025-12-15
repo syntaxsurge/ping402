@@ -3,12 +3,9 @@ import type { Id } from "@convex/_generated/dataModel";
 
 import {
   consumeSolanaPayPingIntent,
-  getPublicReceiptById,
   getSolanaPayPingIntent,
-  setBadgeTxSigForHandle,
 } from "@/lib/db/convex/server";
 import { getEnvServer } from "@/lib/env/env.server";
-import { mintSupporterBadge } from "@/lib/solana/badges";
 import { solanaExplorerTxUrl } from "@/lib/solana/explorer";
 
 export const runtime = "nodejs";
@@ -37,31 +34,6 @@ export async function POST(
 
   const { messageId } = await consumeSolanaPayPingIntent({ intentId: intent._id });
 
-  let badgeTxSig: string | null = null;
-  let badgeError: string | null = null;
-
-  const receipt = await getPublicReceiptById({ messageId });
-
-  if (receipt?.badgeTxSig) {
-    badgeTxSig = receipt.badgeTxSig;
-  } else if (intent.payer) {
-    const mint = await mintSupporterBadge({
-      recipientWallet: intent.payer,
-      memo: `ping402:badge:${messageId}`,
-    });
-
-    if (mint.ok) {
-      badgeTxSig = mint.signature;
-      await setBadgeTxSigForHandle({
-        handle: intent.toHandle,
-        messageId,
-        badgeTxSig: mint.signature,
-      });
-    } else {
-      badgeError = mint.reason;
-    }
-  }
-
   const env = getEnvServer();
   const paymentTxSig = intent.paymentTxSig ?? null;
 
@@ -69,7 +41,6 @@ export async function POST(
   redirectUrl.searchParams.set("sent", "1");
   redirectUrl.searchParams.set("r", messageId);
   if (paymentTxSig) redirectUrl.searchParams.set("tx", paymentTxSig);
-  if (badgeTxSig) redirectUrl.searchParams.set("badgeTx", badgeTxSig);
 
   const explorerUrl = paymentTxSig ? solanaExplorerTxUrl(paymentTxSig, env.X402_NETWORK) : null;
 
@@ -82,9 +53,6 @@ export async function POST(
       payer: intent.payer ?? null,
       paymentTxSig,
       paymentExplorerUrl: explorerUrl,
-      badgeTxSig,
-      badgeExplorerUrl: badgeTxSig ? solanaExplorerTxUrl(badgeTxSig, env.X402_NETWORK) : null,
-      badgeError,
       redirectUrl: redirectUrl.toString(),
       requestId,
     },
@@ -93,8 +61,6 @@ export async function POST(
 
   res.headers.set("x-ping402-message-id", messageId);
   if (paymentTxSig) res.headers.set("x-ping402-payment-tx", paymentTxSig);
-  if (badgeTxSig) res.headers.set("x-ping402-badge-tx", badgeTxSig);
 
   return res;
 }
-

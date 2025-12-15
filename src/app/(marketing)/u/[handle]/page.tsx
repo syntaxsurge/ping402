@@ -44,10 +44,10 @@ export default async function UserProfilePage({
   searchParams,
 }: {
   params: Promise<{ handle: string }>;
-  searchParams: Promise<{ sent?: string; tx?: string; badgeTx?: string; r?: string }>;
+  searchParams: Promise<{ sent?: string; tx?: string; r?: string }>;
 }) {
   const { handle } = await params;
-  const { sent, tx, badgeTx, r } = await searchParams;
+  const { sent, tx, r } = await searchParams;
 
   const decodedHandle = decodeURIComponent(handle);
   const normalizedHandle = parseHandle(decodedHandle);
@@ -101,7 +101,7 @@ export default async function UserProfilePage({
     );
   }
 
-  const needsEnv = Boolean(tx || badgeTx);
+  const needsEnv = Boolean(tx);
   const [stats, env] = await Promise.all([
     getInboxStatsForHandle({ handle: profile.handle }),
     needsEnv ? getEnvServer() : Promise.resolve(null),
@@ -166,20 +166,6 @@ export default async function UserProfilePage({
                 rel="noreferrer"
               >
                 {tx}
-              </Link>
-            </div>
-          ) : null}
-
-          {badgeTx && env && isSolanaTxSignature(badgeTx) ? (
-            <div className="text-xs text-muted-foreground">
-              Badge{" "}
-              <Link
-                className="text-primary underline-offset-4 hover:underline"
-                href={solanaExplorerTxUrl(badgeTx, env.X402_NETWORK)}
-                target="_blank"
-                rel="noreferrer"
-              >
-                {badgeTx}
               </Link>
             </div>
           ) : null}

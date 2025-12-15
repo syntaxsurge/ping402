@@ -90,14 +90,6 @@ export async function setMessageStatusForHandle(input: {
   });
 }
 
-export async function setBadgeTxSigForHandle(input: {
-  handle: string;
-  messageId: Id<"messages">;
-  badgeTxSig: string;
-}) {
-  return await getClient().mutation(api.messages.setBadgeTxSigForHandle, input);
-}
-
 export async function getPublicReceiptById(input: { messageId: Id<"messages"> }) {
   return await getClient().query(api.messages.getPublicReceiptById, input);
 }

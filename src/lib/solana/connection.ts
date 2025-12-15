@@ -11,13 +11,10 @@ export function getSolanaConnection(): Connection {
   if (cached) return cached;
 
   const env = getEnvServer();
-  const endpoint =
-    env.SOLANA_RPC_URL ??
-    clusterApiUrl(isSolanaDevnet(env.X402_NETWORK) ? "devnet" : "mainnet-beta");
+  const endpoint = clusterApiUrl(isSolanaDevnet(env.X402_NETWORK) ? "devnet" : "mainnet-beta");
 
   cached = new Connection(endpoint, {
     commitment: "confirmed",
-    wsEndpoint: env.SOLANA_WS_URL,
   });
   return cached;
 }
