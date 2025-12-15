@@ -16,6 +16,12 @@ const upstashToken = process.env.UPSTASH_REDIS_REST_TOKEN;
 const redis =
   upstashUrl && upstashToken ? new Redis({ url: upstashUrl, token: upstashToken }) : null;
 
+if (process.env.NODE_ENV === "production" && !redis) {
+  console.warn(
+    "[ping402] Upstash rate limiting is disabled (missing UPSTASH_REDIS_REST_URL/UPSTASH_REDIS_REST_TOKEN).",
+  );
+}
+
 const readLimiter = redis
   ? new Ratelimit({
       redis,
@@ -65,15 +71,6 @@ export async function middleware(req: NextRequest, event: NextFetchEvent) {
 
   const requestHeaders = new Headers(req.headers);
   requestHeaders.set("x-request-id", requestId);
-
-  if (process.env.NODE_ENV === "production" && (!upstashUrl || !upstashToken)) {
-    const res = NextResponse.json(
-      { error: { code: "MISSING_RATE_LIMIT_CONFIG" }, requestId },
-      { status: 500, headers: { "x-request-id": requestId } },
-    );
-    applySecurityHeaders(res);
-    return res;
-  }
 
   let rateLimit: { limit: number; remaining: number; reset: number } | null = null;
 

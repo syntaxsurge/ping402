@@ -25,15 +25,13 @@ Paid inbox pings on Solana using x402 (HTTP 402 Payment Required), with messages
 
 3. Configure env vars:
 
-   - Copy `.env.example` values into `.env.local` and set:
-     - `X402_NETWORK` (CAIP-2: `solana:EtWTRABZaYq6iMfeYKouRu166VU2xqa1` for devnet, `solana:5eykt4UsFv8P8NJdTREpY1vzqKqZKvdp` for mainnet)
-     - `X402_FACILITATOR_URL`
-     - `SOLANA_RPC_URL` and `SOLANA_WS_URL` (optional overrides)
+   - `.env.example` and `.env.local` share the same keys. Set these required values in `.env.local`:
      - `PING402_CLAIM_PAY_TO_WALLET` (required; receives x402 handle-claim fees)
-     - `CDP_API_KEY_ID` and `CDP_API_KEY_SECRET` (required when using the CDP facilitator URL)
-     - `PING402_JWT_SECRET` (required; used for the creator HttpOnly session cookie)
-     - `PING402_BADGE_MINT` + `PING402_BADGE_AUTHORITY_SECRET_KEY` (optional; enables Token-2022 supporter badges)
-     - `UPSTASH_REDIS_REST_URL` + `UPSTASH_REDIS_REST_TOKEN` (required for production deployments; enables edge rate limiting)
+     - `PING402_JWT_SECRET` (required; used for the creator HttpOnly session cookie; 32+ chars)
+   - Optional:
+     - `NEXT_PUBLIC_SITE_URL` (used for absolute URLs; on Vercel you can omit and rely on `VERCEL_URL`)
+     - `X402_NETWORK` (CAIP-2: `solana:EtWTRABZaYq6iMfeYKouRu166VU2xqa1` for devnet, `solana:5eykt4UsFv8P8NJdTREpY1vzqKqZKvdp` for mainnet)
+     - `X402_FACILITATOR_URL` (defaults to `https://x402.org/facilitator`)
 
 4. Start Next.js:
 
@@ -74,7 +72,7 @@ Required env:
 
 Optional env:
 
-- `PING402_BASE_URL` (defaults to `http://localhost:3000`)
+- Uses `NEXT_PUBLIC_SITE_URL` (or `VERCEL_URL`) as the base URL.
 - `PING402_BUYER_MODE` (`demo` or `ping`)
 - `PING402_DISCOVERY_URL` (override discovery source)
 - `PING402_TO_HANDLE`, `PING402_MESSAGE`, `PING402_TIER` (required when `PING402_BUYER_MODE=ping`)

@@ -10,12 +10,12 @@ import { x402Client, wrapFetchWithPayment } from "@x402/fetch";
 import { registerExactSvmScheme } from "@x402/svm/exact/client";
 import { createKeyPairSignerFromBytes } from "@solana/kit";
 
+import { getSiteUrl } from "../../src/lib/config/site";
+
 type FetchWithPayment = ReturnType<typeof wrapFetchWithPayment>;
 
 const EnvSchema = z
   .object({
-    PING402_BASE_URL: z.string().url().default("http://localhost:3000"),
-
     PING402_BUYER_SECRET_KEY: z.string().optional(),
     PING402_BUYER_KEYPAIR_PATH: z.string().optional(),
 
@@ -195,6 +195,7 @@ async function callPing(fetchWithPayment: FetchWithPayment, endpointUrl: string,
 
 async function main() {
   const env = EnvSchema.parse(process.env);
+  const baseUrl = getSiteUrl();
 
   const secretKeyBytes = await loadBuyerKeypair(env);
   const signer = await createKeyPairSignerFromBytes(secretKeyBytes);
@@ -205,20 +206,20 @@ async function main() {
   const fetchWithPayment = wrapFetchWithPayment(fetch, client);
 
   console.log("Buyer wallet:", signer.address.toString());
-  console.log("Base URL:", env.PING402_BASE_URL);
+  console.log("Base URL:", baseUrl);
   console.log("Mode:", env.PING402_BUYER_MODE);
 
-  const discovered = await discover(env.PING402_BASE_URL, env.PING402_DISCOVERY_URL);
+  const discovered = await discover(baseUrl, env.PING402_DISCOVERY_URL);
 
   if (env.PING402_BUYER_MODE === "ping") {
     const discoveredPing = discovered.find((item) => new URL(item).pathname === "/api/ping/send");
-    const fallbackPing = new URL("/api/ping/send", env.PING402_BASE_URL).toString();
+    const fallbackPing = new URL("/api/ping/send", baseUrl).toString();
     await callPing(fetchWithPayment, discoveredPing ?? fallbackPing, env);
     return;
   }
 
   const discoveredDemo = discovered.find((item) => new URL(item).pathname === "/api/x402/demo");
-  const fallbackDemo = new URL("/api/x402/demo", env.PING402_BASE_URL).toString();
+  const fallbackDemo = new URL("/api/x402/demo", baseUrl).toString();
   await callDemo(fetchWithPayment, discoveredDemo ?? fallbackDemo);
 }
 
