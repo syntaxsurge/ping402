@@ -254,15 +254,6 @@ export async function POST(req: NextRequest) {
     extensions: {
       ...declareBazaarBodyDiscoveryExtension({
         bodyType: "json",
-        input: {
-          publicKey: "11111111111111111111111111111111",
-          signature: "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==",
-          nonce: "ping402-nonce-example",
-          issuedAt: "2025-12-15T00:00:00.000Z",
-          handle,
-          displayName: handle,
-          bio: "Paid inbox on Solana.",
-        },
         inputSchema: ClaimHandleInputSchema,
         output: {
           example: { ok: true, requestId },

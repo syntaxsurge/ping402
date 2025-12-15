@@ -16,6 +16,12 @@ const UrlString = z.preprocess((value) => {
   return value.trim();
 }, z.string().url());
 
+const OptionalUrlString = z.preprocess((value) => {
+  if (typeof value !== "string") return value;
+  const trimmed = value.trim();
+  return trimmed.length === 0 ? undefined : trimmed;
+}, z.string().url().optional());
+
 function isSolanaPublicKey(address: string): boolean {
   try {
     return bs58.decode(address).length === 32;
@@ -45,8 +51,8 @@ const ServerEnvSchema = z.object({
     v.replace(/\/$/, ""),
   ),
 
-  SOLANA_RPC_URL: UrlString.optional(),
-  SOLANA_WS_URL: UrlString.optional(),
+  SOLANA_RPC_URL: OptionalUrlString,
+  SOLANA_WS_URL: OptionalUrlString,
 
   CDP_API_KEY_ID: OptionalNonEmptyString.pipe(z.string().min(1).optional()),
   CDP_API_KEY_SECRET: OptionalNonEmptyString.pipe(z.string().min(1).optional()),
