@@ -12,7 +12,7 @@ const buttonVariants = cva(
         default:
           "bg-primary text-primary-foreground shadow hover:bg-primary/90",
         brand:
-          "bg-gradient-to-r from-[rgb(var(--brand-purple))] to-[rgb(var(--brand-green))] font-semibold text-white shadow-sm transition-all hover:brightness-110 hover:shadow-md active:brightness-95",
+          "bg-gradient-to-r from-[rgb(var(--brand-purple-strong))] to-[rgb(var(--brand-green-strong))] font-semibold text-white shadow-sm transition-all hover:brightness-110 hover:shadow-md active:brightness-95",
         destructive:
           "bg-destructive text-destructive-foreground shadow-sm hover:bg-destructive/90",
         outline:

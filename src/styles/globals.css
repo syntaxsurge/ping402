@@ -3,6 +3,8 @@
 :root {
   --brand-purple: 153 69 255;
   --brand-green: 20 241 149;
+  --brand-purple-strong: 124 58 237;
+  --brand-green-strong: 5 150 105;
   --brand-glow:
     radial-gradient(60% 60% at 50% 0%, rgb(var(--brand-purple) / 0.22), transparent 70%),
     radial-gradient(55% 55% at 80% 10%, rgb(var(--brand-green) / 0.18), transparent 65%),

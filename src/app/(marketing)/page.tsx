@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { Check } from "lucide-react";
 
 import { HandleSearch } from "@/components/marketing/HandleSearch";
 import { InboxPreviewCard } from "@/components/marketing/InboxPreviewCard";
@@ -8,7 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { getOwnerSession } from "@/lib/auth/ownerSession";
-import { getPingTierConfig, PING_TIER_ORDER } from "@/lib/ping/tiers";
+import { getPingTierConfig, PING_TIER_ORDER, type PingTier } from "@/lib/ping/tiers";
 import { getEnvServer } from "@/lib/env/env.server";
 import { isSolanaDevnet, solanaNetworkLabel } from "@/lib/solana/chain";
 
@@ -17,6 +18,21 @@ export default async function HomePage() {
   const env = getEnvServer();
   const networkLabel = solanaNetworkLabel(env.X402_NETWORK);
   const isDevnet = isSolanaDevnet(env.X402_NETWORK);
+
+  const tierBenefits: Record<PingTier, { badge: string; bullets: string[] }> = {
+    standard: {
+      badge: "Starter",
+      bullets: ["Lowest cost signal", "Great for quick questions", "Delivered via x402 proof + retry"],
+    },
+    priority: {
+      badge: "Most popular",
+      bullets: ["Stronger urgency signal", "Ideal for time-sensitive requests", "Shows up clearly in the inbox"],
+    },
+    vip: {
+      badge: "Highest signal",
+      bullets: ["Top-tier urgency", "Best for escalations", "Premium price discourages spam"],
+    },
+  };
 
   return (
     <div className="space-y-24">
@@ -220,37 +236,66 @@ export default async function HomePage() {
         </div>
       </section>
 
-      <section id="tiers" className="scroll-mt-24 space-y-8">
-        <div className="space-y-2">
-          <h2 className="h3">Message tiers</h2>
-          <p className="muted">
-            Three tiers, one simple rule: higher tier → higher priority.
-          </p>
-        </div>
+	      <section id="tiers" className="scroll-mt-24 space-y-8">
+	        <div className="space-y-2">
+	          <h2 className="h3">Message tiers</h2>
+	          <p className="muted">
+	            Three tiers, one simple rule: higher tier → higher priority.
+	          </p>
+	        </div>
 
-        <div className="grid gap-4 md:grid-cols-3">
-          {PING_TIER_ORDER.map((tier) => {
-            const meta = getPingTierConfig(tier);
-            const variant = tier === "vip" ? "brand" : tier === "priority" ? "default" : "outline";
+	        <div className="grid gap-4 md:grid-cols-3">
+	          {PING_TIER_ORDER.map((tier) => {
+	            const meta = getPingTierConfig(tier);
+	            const variant =
+	              tier === "vip" ? "brand" : tier === "priority" ? "default" : "outline";
+	            const highlight = tier === "vip";
+	            const benefits = tierBenefits[tier];
 
-            return (
-              <Card key={tier} className="bg-card/60 backdrop-blur">
-                <CardHeader className="space-y-2">
-                  <div className="flex items-center justify-between gap-3">
-                    <CardTitle className="text-base">{meta.label}</CardTitle>
-                    <Badge variant="secondary">{meta.priceUsd}</Badge>
-                  </div>
-                  <p className="text-sm text-muted-foreground">{meta.description}</p>
-                </CardHeader>
-                <CardContent>
-                  <Button asChild variant={variant} className="w-full">
-                    <Link href="/ping">Choose a creator</Link>
-                  </Button>
-                </CardContent>
-              </Card>
-            );
-          })}
-        </div>
+	            return (
+	              <Card
+	                key={tier}
+	                className={
+	                  highlight
+	                    ? "overflow-hidden border-primary/30 bg-card/60 shadow-md backdrop-blur"
+	                    : "bg-card/60 backdrop-blur"
+	                }
+	              >
+	                {highlight ? (
+	                  <div
+	                    className="h-1 w-full bg-gradient-to-r from-[rgb(var(--brand-purple-strong))] to-[rgb(var(--brand-green-strong))]"
+	                    aria-hidden="true"
+	                  />
+	                ) : null}
+	                <CardHeader className="space-y-4">
+	                  <div className="flex items-start justify-between gap-4">
+	                    <div className="space-y-1">
+	                      <CardTitle className="text-base">{meta.label}</CardTitle>
+	                      <div className="text-3xl font-semibold tracking-tight">
+	                        {meta.priceUsd}
+	                      </div>
+	                      <p className="text-sm text-muted-foreground">{meta.description}</p>
+	                    </div>
+	                    <Badge variant={highlight ? "default" : "secondary"}>{benefits.badge}</Badge>
+	                  </div>
+	                </CardHeader>
+	                <CardContent className="space-y-4">
+	                  <ul className="space-y-2 text-sm text-muted-foreground">
+	                    {benefits.bullets.map((bullet) => (
+	                      <li key={bullet} className="flex gap-2">
+	                        <Check className="mt-0.5 h-4 w-4 text-primary" aria-hidden="true" />
+	                        <span>{bullet}</span>
+	                      </li>
+	                    ))}
+	                  </ul>
+	                  <Button asChild variant={variant} className="w-full">
+	                    <Link href="/ping">Choose a creator</Link>
+	                  </Button>
+	                </CardContent>
+	              </Card>
+	            );
+	          })}
+	        </div>
 
         <p className="text-xs text-muted-foreground">
           Tiers are enforced by a paywalled endpoint at{" "}

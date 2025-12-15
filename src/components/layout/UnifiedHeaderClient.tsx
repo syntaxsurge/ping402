@@ -6,6 +6,7 @@ import { usePathname, useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   BookOpen,
+  ChevronDown,
   Coins,
   Inbox,
   LayoutDashboard,
@@ -45,16 +46,34 @@ type NavLink = {
   icon: React.ComponentType<{ className?: string }>;
 };
 
+type WalletProfile = { handle: string; displayName?: string } | null;
+
 function shortAddress(address: string) {
   if (address.length <= 12) return address;
   return `${address.slice(0, 4)}…${address.slice(-4)}`;
 }
 
 function isActivePath(pathname: string, href: string) {
-  if (href.startsWith("/#")) return pathname === "/";
+  if (href.startsWith("/#")) return false;
   if (href === "/dashboard") return pathname === "/dashboard";
   if (href === "/inbox") return pathname === "/inbox" || pathname.startsWith("/inbox/");
   return pathname === href;
+}
+
+async function getProfileForWallet(walletPubkey: string): Promise<WalletProfile> {
+  const res = await fetch(
+    `/api/profiles/by-owner-wallet?walletPubkey=${encodeURIComponent(walletPubkey)}`,
+    {
+      method: "GET",
+      headers: { Accept: "application/json" },
+      cache: "no-store",
+    },
+  );
+
+  if (!res.ok) return null;
+
+  const data = (await res.json()) as { profile: WalletProfile };
+  return data.profile;
 }
 
 async function serverSignOut() {
@@ -80,12 +99,50 @@ export function UnifiedHeaderClient({ session }: { session: Session }) {
 
   const connectedAddress = useMemo(() => publicKey?.toBase58() ?? null, [publicKey]);
 
-  const accountLabel = session ? `@${session.handle}` : "Account";
+  const [walletProfile, setWalletProfile] = useState<WalletProfile>(null);
+  const [walletProfileLoading, setWalletProfileLoading] = useState(false);
+
+  useEffect(() => {
+    if (session) {
+      setWalletProfile(null);
+      return;
+    }
+
+    if (!connectedAddress) {
+      setWalletProfile(null);
+      return;
+    }
+
+    let cancelled = false;
+    setWalletProfile(null);
+    setWalletProfileLoading(true);
+
+    void getProfileForWallet(connectedAddress)
+      .then((profile) => {
+        if (cancelled) return;
+        setWalletProfile(profile);
+      })
+      .catch(() => {
+        if (cancelled) return;
+        setWalletProfile(null);
+      })
+      .finally(() => {
+        if (cancelled) return;
+        setWalletProfileLoading(false);
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [connectedAddress, session]);
+
+  const displayHandle = session?.handle ?? walletProfile?.handle ?? null;
+  const accountLabel = displayHandle ? `@${displayHandle}` : "Account";
   const avatarFallback = useMemo(() => {
-    const h = session?.handle?.trim();
+    const h = displayHandle?.trim();
     if (!h) return "U";
     return h.slice(0, 1).toUpperCase();
-  }, [session?.handle]);
+  }, [displayHandle]);
 
   const navLinks = useMemo<NavLink[]>(
     () => [
@@ -97,6 +154,16 @@ export function UnifiedHeaderClient({ session }: { session: Session }) {
       { href: "/inbox", label: "Inbox", icon: Inbox },
     ],
     [],
+  );
+
+  const homeLinks = useMemo<NavLink[]>(
+    () => navLinks.filter((link) => link.href.startsWith("/#")),
+    [navLinks],
+  );
+
+  const appLinks = useMemo<NavLink[]>(
+    () => navLinks.filter((link) => !link.href.startsWith("/#")),
+    [navLinks],
   );
 
   const searchAction = session ? "/inbox" : "/ping";
@@ -142,10 +209,10 @@ export function UnifiedHeaderClient({ session }: { session: Session }) {
   }, [connected, runSignOut, session]);
 
   return (
-    <header className="sticky top-0 z-50 border-b bg-background/70 backdrop-blur supports-[backdrop-filter]:bg-background/50">
-      <div className="container-page flex h-16 items-center gap-3">
-        <Sheet>
-          <SheetTrigger asChild>
+	    <header className="sticky top-0 z-50 border-b bg-background/70 backdrop-blur supports-[backdrop-filter]:bg-background/50">
+	      <div className="container-page flex h-16 items-center gap-3">
+	        <Sheet>
+	          <SheetTrigger asChild>
             <Button
               variant="ghost"
               size="icon"
@@ -171,13 +238,16 @@ export function UnifiedHeaderClient({ session }: { session: Session }) {
                 <span>ping402</span>
               </Link>
 
-              <nav className="grid gap-2">
-                {navLinks.map((item) => {
-                  const Icon = item.icon;
-                  const active = isActivePath(pathname, item.href);
-                  return (
-                    <Button
-                      key={item.href}
+	              <nav className="grid gap-2">
+	                <div className="px-2 pt-1 text-xs font-semibold text-muted-foreground">
+	                  Home
+	                </div>
+	                {homeLinks.map((item) => {
+	                  const Icon = item.icon;
+	                  const active = isActivePath(pathname, item.href);
+	                  return (
+	                    <Button
+	                      key={item.href}
                       asChild
                       variant={active ? "secondary" : "ghost"}
                       className="justify-start"
@@ -187,20 +257,49 @@ export function UnifiedHeaderClient({ session }: { session: Session }) {
                         {item.label}
                       </Link>
                     </Button>
-                  );
-                })}
-              </nav>
+	                  );
+	                })}
+	
+	                <div className="px-2 pt-2 text-xs font-semibold text-muted-foreground">
+	                  Creator
+	                </div>
+	                {appLinks.map((item) => {
+	                  const Icon = item.icon;
+	                  const active = isActivePath(pathname, item.href);
+	                  return (
+	                    <Button
+	                      key={item.href}
+	                      asChild
+	                      variant={active ? "secondary" : "ghost"}
+	                      className="justify-start"
+	                    >
+	                      <Link href={item.href}>
+	                        <Icon className="h-4 w-4" aria-hidden="true" />
+	                        {item.label}
+	                      </Link>
+	                    </Button>
+	                  );
+	                })}
+	              </nav>
 
-              <div className="grid gap-2">
-                <Button asChild variant="brand">
-                  <Link href="/ping">Send a ping</Link>
-                </Button>
-                {!session ? (
-                  <Button asChild variant="outline">
-                    <Link href="/owner-signin">Claim a handle</Link>
-                  </Button>
-                ) : null}
-              </div>
+	              <div className="grid gap-2">
+	                <Button asChild variant="brand">
+	                  <Link href="/ping">Send a ping</Link>
+	                </Button>
+	                {!session ? (
+	                  <Button asChild variant="outline">
+	                    <Link
+	                      href={
+	                        walletProfile?.handle
+	                          ? `/owner-signin?handle=${encodeURIComponent(walletProfile.handle)}`
+	                          : "/owner-signin"
+	                      }
+	                    >
+	                      {walletProfile?.handle ? "Sign in" : "Claim a handle"}
+	                    </Link>
+	                  </Button>
+	                ) : null}
+	              </div>
             </div>
           </SheetContent>
         </Sheet>
@@ -219,19 +318,45 @@ export function UnifiedHeaderClient({ session }: { session: Session }) {
           <span className="hidden sm:inline">ping402</span>
         </Link>
 
-        <nav className="hidden items-center gap-1 md:flex">
-          {navLinks.map((link) => (
-            <Button
-              key={link.href}
-              asChild
-              variant="ghost"
-              size="sm"
-              className={cn(isActivePath(pathname, link.href) && "bg-accent")}
-            >
-              <Link href={link.href}>{link.label}</Link>
-            </Button>
-          ))}
-        </nav>
+	        <nav className="hidden items-center gap-1 md:flex">
+	          <DropdownMenu>
+	            <DropdownMenuTrigger asChild>
+	              <Button
+	                variant="ghost"
+	                size="sm"
+	                className={cn("gap-1", pathname === "/" && "bg-accent")}
+	              >
+	                Home
+	                <ChevronDown className="h-4 w-4" aria-hidden="true" />
+	              </Button>
+	            </DropdownMenuTrigger>
+	            <DropdownMenuContent align="start" className="w-56">
+	              {homeLinks.map((link) => {
+	                const Icon = link.icon;
+	                return (
+	                  <DropdownMenuItem key={link.href} asChild className="cursor-pointer">
+	                    <Link href={link.href}>
+	                      <Icon className="h-4 w-4" aria-hidden="true" />
+	                      {link.label}
+	                    </Link>
+	                  </DropdownMenuItem>
+	                );
+	              })}
+	            </DropdownMenuContent>
+	          </DropdownMenu>
+
+	          {appLinks.map((link) => (
+	            <Button
+	              key={link.href}
+	              asChild
+	              variant="ghost"
+	              size="sm"
+	              className={cn(isActivePath(pathname, link.href) && "bg-accent")}
+	            >
+	              <Link href={link.href}>{link.label}</Link>
+	            </Button>
+	          ))}
+	        </nav>
 
         <form
           action={searchAction}
@@ -265,19 +390,21 @@ export function UnifiedHeaderClient({ session }: { session: Session }) {
                 <span className="sm:hidden">Menu</span>
               </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-72">
-              <DropdownMenuLabel className="space-y-1">
-                <div className="text-sm font-medium">{accountLabel}</div>
-                {session ? (
-                  <div className="font-mono text-xs text-muted-foreground">
-                    {shortAddress(session.walletPubkey)}
-                  </div>
-                ) : (
-                  <div className="text-xs text-muted-foreground">
-                    Sign in to manage your inbox.
-                  </div>
-                )}
-              </DropdownMenuLabel>
+	            <DropdownMenuContent align="end" className="w-72">
+	              <DropdownMenuLabel className="space-y-1">
+	                <div className="text-sm font-medium">{accountLabel}</div>
+	                <div className="text-xs text-muted-foreground">
+	                  {session ? (
+	                    <span className="font-mono">{shortAddress(session.walletPubkey)}</span>
+	                  ) : walletProfileLoading ? (
+	                    <>Checking connected wallet…</>
+	                  ) : walletProfile ? (
+	                    <>Wallet recognized — sign in to manage your inbox.</>
+	                  ) : (
+	                    <>Sign in to manage your inbox.</>
+	                  )}
+	                </div>
+	              </DropdownMenuLabel>
 
               <DropdownMenuSeparator />
 
@@ -294,14 +421,21 @@ export function UnifiedHeaderClient({ session }: { session: Session }) {
                 </Link>
               </DropdownMenuItem>
 
-              {session ? (
-                <DropdownMenuItem asChild className="cursor-pointer">
-                  <Link href={`/u/${encodeURIComponent(session.handle)}`}>
-                    <SquareArrowOutUpRight className="h-4 w-4" aria-hidden="true" />
-                    Public page
-                  </Link>
-                </DropdownMenuItem>
-              ) : null}
+	              {session ? (
+	                <DropdownMenuItem asChild className="cursor-pointer">
+	                  <Link href={`/u/${encodeURIComponent(session.handle)}`}>
+	                    <SquareArrowOutUpRight className="h-4 w-4" aria-hidden="true" />
+	                    Public page
+	                  </Link>
+	                </DropdownMenuItem>
+	              ) : walletProfile ? (
+	                <DropdownMenuItem asChild className="cursor-pointer">
+	                  <Link href={`/u/${encodeURIComponent(walletProfile.handle)}`}>
+	                    <SquareArrowOutUpRight className="h-4 w-4" aria-hidden="true" />
+	                    Public page
+	                  </Link>
+	                </DropdownMenuItem>
+	              ) : null}
 
               <DropdownMenuSeparator />
 
@@ -341,36 +475,50 @@ export function UnifiedHeaderClient({ session }: { session: Session }) {
                 </DropdownMenuItem>
               ) : null}
 
-              {session ? (
-                <>
-                  <DropdownMenuItem
-                    className="cursor-pointer"
-                    disabled={signingOut}
-                    onClick={() => void runSignOut({ disconnectWallet: true })}
-                  >
-                    <LogOut className="h-4 w-4" aria-hidden="true" />
-                    {signingOut ? "Signing out…" : "Sign out (disconnect wallet)"}
-                  </DropdownMenuItem>
-                </>
-              ) : (
-                <>
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem asChild className="cursor-pointer">
-                    <Link href="/owner-signin">
-                      <Sparkles className="h-4 w-4" aria-hidden="true" />
-                      Claim a handle
-                    </Link>
-                  </DropdownMenuItem>
-                </>
-              )}
+	              {session ? (
+	                <>
+	                  <DropdownMenuItem
+	                    className="cursor-pointer"
+	                    disabled={signingOut}
+	                    onClick={() => void runSignOut({ disconnectWallet: true })}
+	                  >
+	                    <LogOut className="h-4 w-4" aria-hidden="true" />
+	                    {signingOut ? "Signing out…" : "Sign out (disconnect wallet)"}
+	                  </DropdownMenuItem>
+	                </>
+	              ) : (
+	                <>
+	                  <DropdownMenuSeparator />
+	                  <DropdownMenuItem asChild className="cursor-pointer">
+	                    <Link
+	                      href={
+	                        walletProfile?.handle
+	                          ? `/owner-signin?handle=${encodeURIComponent(walletProfile.handle)}`
+	                          : "/owner-signin"
+	                      }
+	                    >
+	                      <Sparkles className="h-4 w-4" aria-hidden="true" />
+	                      {walletProfile?.handle ? "Sign in" : "Claim a handle"}
+	                    </Link>
+	                  </DropdownMenuItem>
+	                </>
+	              )}
             </DropdownMenuContent>
           </DropdownMenu>
 
-          {!session ? (
-            <Button asChild variant="outline" size="sm" className="hidden sm:inline-flex">
-              <Link href="/owner-signin">Claim a handle</Link>
-            </Button>
-          ) : null}
+	          {!session ? (
+	            <Button asChild variant="outline" size="sm" className="hidden sm:inline-flex">
+	              <Link
+	                href={
+	                  walletProfile?.handle
+	                    ? `/owner-signin?handle=${encodeURIComponent(walletProfile.handle)}`
+	                    : "/owner-signin"
+	                }
+	              >
+	                {walletProfile?.handle ? "Sign in" : "Claim a handle"}
+	              </Link>
+	            </Button>
+	          ) : null}
 
           <Button asChild variant="brand" size="sm" className="hidden sm:inline-flex">
             <Link href="/ping">Send a ping</Link>

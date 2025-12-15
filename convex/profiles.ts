@@ -16,6 +16,21 @@ export const byHandle = query({
   },
 });
 
+export const byOwnerWallet = query({
+  args: { ownerWallet: v.string() },
+  handler: async (ctx, args) => {
+    const ownerWallet = args.ownerWallet.trim();
+    if (ownerWallet.length < 20) {
+      throw new ConvexError("Invalid owner wallet.");
+    }
+
+    return await ctx.db
+      .query("profiles")
+      .withIndex("by_ownerWallet", (q) => q.eq("ownerWallet", ownerWallet))
+      .unique();
+  },
+});
+
 export const claimHandle = mutation({
   args: {
     handle: v.string(),
