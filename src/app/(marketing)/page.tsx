@@ -6,18 +6,23 @@ import { InboxPreviewCard } from "@/components/marketing/InboxPreviewCard";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { getOwnerSession } from "@/lib/auth/ownerSession";
 import { getPingTierConfig, PING_TIER_ORDER, type PingTier } from "@/lib/ping/tiers";
 import { getEnvServer } from "@/lib/env/env.server";
 import { isSolanaDevnet, solanaNetworkLabel } from "@/lib/solana/chain";
+import { getYouTubeVideoId } from "@/lib/utils/youtube";
 
 export default async function HomePage() {
   const session = await getOwnerSession();
   const env = getEnvServer();
   const networkLabel = solanaNetworkLabel(env.X402_NETWORK);
   const isDevnet = isSolanaDevnet(env.X402_NETWORK);
+  const demoVideoId = env.DEMO_VIDEO_URL ? getYouTubeVideoId(env.DEMO_VIDEO_URL) : null;
+  const demoEmbedSrc = demoVideoId
+    ? `https://www.youtube-nocookie.com/embed/${demoVideoId}?rel=0&modestbranding=1`
+    : null;
 
   const tierBenefits: Record<PingTier, { badge: string; bullets: string[] }> = {
     standard: {
@@ -80,6 +85,46 @@ export default async function HomePage() {
           </div>
         </div>
       </section>
+
+      {demoEmbedSrc ? (
+        <section id="demo-video" className="scroll-mt-24">
+          <Card className="overflow-hidden bg-card/60 backdrop-blur">
+            <CardHeader className="space-y-2">
+              <CardTitle className="text-base">Watch the demo</CardTitle>
+              <CardDescription>
+                A quick walkthrough of the paid ping flow: choose a creator, pick a tier, pay with Solana Pay, and get a verifiable receipt.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="p-0">
+              <div className="aspect-video w-full bg-muted">
+                <iframe
+                  className="h-full w-full"
+                  src={demoEmbedSrc}
+                  title="ping402 demo video"
+                  loading="lazy"
+                  referrerPolicy="strict-origin-when-cross-origin"
+                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                  allowFullScreen
+                />
+              </div>
+            </CardContent>
+            <CardFooter className="flex flex-wrap gap-3">
+              <Button asChild variant="brand">
+                <Link href="/demo-video" target="_blank" rel="noreferrer">
+                  Open on YouTube
+                </Link>
+              </Button>
+              {env.PITCH_DECK_URL ? (
+                <Button asChild variant="outline">
+                  <Link href="/pitch-deck" target="_blank" rel="noreferrer">
+                    Open pitch deck
+                  </Link>
+                </Button>
+              ) : null}
+            </CardFooter>
+          </Card>
+        </section>
+      ) : null}
 
       <section id="how-it-works" className="scroll-mt-24 space-y-8">
         <div className="space-y-2">

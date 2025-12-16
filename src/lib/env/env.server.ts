@@ -9,6 +9,12 @@ const UrlString = z.preprocess((value) => {
   return value.trim();
 }, z.string().url());
 
+const OptionalUrlString = z.preprocess((value) => {
+  if (typeof value !== "string") return value;
+  const trimmed = value.trim();
+  return trimmed.length === 0 ? undefined : trimmed;
+}, z.string().url().optional());
+
 const ServerEnvSchema = z.object({
   NEXT_PUBLIC_CONVEX_URL: UrlString,
 
@@ -18,6 +24,9 @@ const ServerEnvSchema = z.object({
   X402_FACILITATOR_URL: UrlString.default("https://x402.org/facilitator").transform((v) =>
     v.replace(/\/$/, ""),
   ),
+
+  DEMO_VIDEO_URL: OptionalUrlString,
+  PITCH_DECK_URL: OptionalUrlString,
 
   PING402_JWT_SECRET: z.string().min(32),
 });
