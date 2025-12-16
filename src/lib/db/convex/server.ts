@@ -23,11 +23,7 @@ export async function getProfileByHandle(handle: string) {
 export async function getProfileByOwnerWallet(ownerWallet: string) {
   const normalized = ownerWallet.trim();
   if (normalized.length < 20) return null;
-  try {
-    return await getClient().query(api.profiles.byOwnerWallet, { ownerWallet: normalized });
-  } catch {
-    return null;
-  }
+  return await getClient().query(api.profiles.byOwnerWallet, { ownerWallet: normalized });
 }
 
 export async function claimHandle(input: {

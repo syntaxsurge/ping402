@@ -380,7 +380,7 @@ Select **one** backend stack (Drizzle+Supabase or Convex) per project by default
 - `GET /api/health` — health check JSON
 - `GET /api/handles/lookup?handle=[handle]` — handle availability lookup (exact match)
 - `GET /api/handles/search?query=[query]` — handle search + suggestions for onboarding UI
-- `GET /api/profiles/by-owner-wallet?walletPubkey=[walletPubkey]` — resolves a wallet pubkey to a claimed handle (if any)
+- `GET /api/profiles/by-owner-wallet?walletPubkey=[walletPubkey]` — resolves a wallet pubkey to a claimed handle (if any); returns 503 when the Convex query is unavailable
 - `POST /api/auth/nonce` — issues a one-time sign-in nonce
 - `POST /api/auth/verify` — verifies signature, claims handle, and sets creator session cookie
 - `POST /api/auth/signout` — clears creator session cookie

@@ -56,6 +56,10 @@ type HomeLink = {
 
 type WalletProfile = { handle: string; displayName?: string } | null;
 
+type WalletProfileLookupResult =
+  | { ok: true; profile: WalletProfile }
+  | { ok: false; code: "UNAVAILABLE" | "INVALID_WALLET" | "REQUEST_FAILED" };
+
 function shortAddress(address: string) {
   if (address.length <= 12) return address;
   return `${address.slice(0, 4)}…${address.slice(-4)}`;
@@ -99,20 +103,32 @@ function isActivePath(pathname: string, href: string) {
   return pathname === href;
 }
 
-async function getProfileForWallet(walletPubkey: string): Promise<WalletProfile> {
-  const res = await fetch(
-    `/api/profiles/by-owner-wallet?walletPubkey=${encodeURIComponent(walletPubkey)}`,
-    {
-      method: "GET",
-      headers: { Accept: "application/json" },
-      cache: "no-store",
-    },
-  );
+async function getProfileForWallet(
+  walletPubkey: string,
+  options?: { signal?: AbortSignal },
+): Promise<WalletProfileLookupResult> {
+  try {
+    const res = await fetch(
+      `/api/profiles/by-owner-wallet?walletPubkey=${encodeURIComponent(walletPubkey)}`,
+      {
+        method: "GET",
+        headers: { Accept: "application/json" },
+        cache: "no-store",
+        signal: options?.signal,
+      },
+    );
 
-  if (!res.ok) return null;
+    if (res.ok) {
+      const data = (await res.json()) as { profile: WalletProfile };
+      return { ok: true, profile: data.profile };
+    }
 
-  const data = (await res.json()) as { profile: WalletProfile };
-  return data.profile;
+    if (res.status === 400) return { ok: false, code: "INVALID_WALLET" };
+    if (res.status === 503) return { ok: false, code: "UNAVAILABLE" };
+    return { ok: false, code: "REQUEST_FAILED" };
+  } catch {
+    return { ok: false, code: "REQUEST_FAILED" };
+  }
 }
 
 async function getAuthNonce() {
@@ -176,7 +192,10 @@ export function UnifiedHeaderClient({ session }: { session: Session }) {
   const signOutRef = useRef(false);
   const prevConnected = useRef<boolean>(false);
 
-  const connectedAddress = useMemo(() => publicKey?.toBase58() ?? null, [publicKey]);
+  const connectedAddress = useMemo(
+    () => (connected && publicKey ? publicKey.toBase58() : null),
+    [connected, publicKey],
+  );
 
   const [accountMenuOpen, setAccountMenuOpen] = useState(false);
   const [balancesLoading, setBalancesLoading] = useState(false);
@@ -190,42 +209,76 @@ export function UnifiedHeaderClient({ session }: { session: Session }) {
 
   const [walletProfile, setWalletProfile] = useState<WalletProfile>(null);
   const [walletProfileLoading, setWalletProfileLoading] = useState(false);
+  const [walletProfileError, setWalletProfileError] = useState<null | "unavailable" | "request_failed">(null);
+  const [walletProfileNonce, setWalletProfileNonce] = useState(0);
   const [signingIn, setSigningIn] = useState(false);
   const signInRef = useRef(false);
 
   useEffect(() => {
     if (session) {
       setWalletProfile(null);
+      setWalletProfileLoading(false);
+      setWalletProfileError(null);
       return;
     }
 
     if (!connectedAddress) {
       setWalletProfile(null);
+      setWalletProfileLoading(false);
+      setWalletProfileError(null);
       return;
     }
 
     let cancelled = false;
+    const controller = new AbortController();
     setWalletProfile(null);
     setWalletProfileLoading(true);
+    setWalletProfileError(null);
 
-    void getProfileForWallet(connectedAddress)
-      .then((profile) => {
+    void (async () => {
+      const maxAttempts = 8;
+      for (let attempt = 0; attempt < maxAttempts; attempt += 1) {
+        const result = await getProfileForWallet(connectedAddress, { signal: controller.signal });
         if (cancelled) return;
-        setWalletProfile(profile);
-      })
-      .catch(() => {
-        if (cancelled) return;
+
+        if (result.ok) {
+          setWalletProfile(result.profile);
+          setWalletProfileLoading(false);
+          setWalletProfileError(null);
+          return;
+        }
+
+        if (result.code === "INVALID_WALLET") {
+          setWalletProfile(null);
+          setWalletProfileLoading(false);
+          setWalletProfileError("request_failed");
+          return;
+        }
+
+        const retryable = result.code === "UNAVAILABLE" || result.code === "REQUEST_FAILED";
+        if (retryable && attempt < maxAttempts - 1) {
+          await new Promise<void>((resolve) => {
+            window.setTimeout(resolve, 600 + attempt * 450);
+          });
+          continue;
+        }
+
         setWalletProfile(null);
-      })
-      .finally(() => {
-        if (cancelled) return;
         setWalletProfileLoading(false);
-      });
+        setWalletProfileError(result.code === "UNAVAILABLE" ? "unavailable" : "request_failed");
+        return;
+      }
+    })();
 
     return () => {
       cancelled = true;
+      controller.abort();
     };
-  }, [connectedAddress, session]);
+  }, [connectedAddress, session, walletProfileNonce]);
+
+  const retryWalletProfileLookup = useCallback(() => {
+    setWalletProfileNonce((prev) => prev + 1);
+  }, []);
 
   const accountLabel = session ? `@${session.handle}` : "Account";
   const avatarFallback = useMemo(() => {
@@ -527,15 +580,25 @@ export function UnifiedHeaderClient({ session }: { session: Session }) {
 	                        Connect wallet
 	                      </Button>
 	                    </SheetClose>
-	                  ) : walletProfileLoading ? (
-	                    <Button type="button" variant="outline" disabled>
-	                      Checking wallet…
-	                    </Button>
-	                  ) : walletProfile?.handle ? (
-	                    <SheetClose asChild>
-	                      <Button
-	                        type="button"
-	                        variant="outline"
+		                  ) : walletProfileLoading ? (
+		                    <Button type="button" variant="outline" disabled>
+		                      Checking wallet…
+		                    </Button>
+		                  ) : walletProfileError ? (
+		                    <Button
+		                      type="button"
+		                      variant="outline"
+		                      className="gap-2"
+		                      onClick={retryWalletProfileLookup}
+		                    >
+		                      <RefreshCcw className="h-4 w-4" aria-hidden="true" />
+		                      Retry wallet sync
+		                    </Button>
+		                  ) : walletProfile?.handle ? (
+		                    <SheetClose asChild>
+		                      <Button
+		                        type="button"
+		                        variant="outline"
 	                        disabled={signingIn || !signMessage}
 	                        onClick={() => void runSignIn()}
 	                      >
@@ -741,15 +804,27 @@ export function UnifiedHeaderClient({ session }: { session: Session }) {
               <span className="hidden sm:inline">Connect wallet</span>
               <span className="sm:hidden">Connect</span>
             </Button>
-          ) : walletProfileLoading ? (
-            <Button variant="outline" size="sm" disabled>
-              <span className="hidden sm:inline">Checking wallet…</span>
-              <span className="sm:hidden">Checking…</span>
-            </Button>
-          ) : walletProfile?.handle ? (
-            <Button
-              type="button"
-              variant="brand"
+	          ) : walletProfileLoading ? (
+	            <Button variant="outline" size="sm" disabled>
+	              <span className="hidden sm:inline">Checking wallet…</span>
+	              <span className="sm:hidden">Checking…</span>
+	            </Button>
+	          ) : walletProfileError ? (
+	            <Button
+	              type="button"
+	              variant="outline"
+	              size="sm"
+	              className="gap-2"
+	              onClick={retryWalletProfileLookup}
+	            >
+	              <RefreshCcw className="h-4 w-4" aria-hidden="true" />
+	              <span className="hidden sm:inline">Retry wallet sync</span>
+	              <span className="sm:hidden">Retry</span>
+	            </Button>
+	          ) : walletProfile?.handle ? (
+	            <Button
+	              type="button"
+	              variant="brand"
               size="sm"
               className="gap-2"
               disabled={signingIn || !signMessage}
