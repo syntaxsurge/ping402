@@ -13,7 +13,7 @@ One-liner: A creator-paid inbox on Solana where x402 enforces pay-per-message de
   6. Click **“Phantom”** — wait for the header to update.
   7. **Verify on-screen:** The header wallet button shows a shortened address (connected state), not **“Connect wallet”**.
 - **Voiceover:**
-  > “First, connect a Solana wallet. ping402 is a paid inbox, so wallet identity is the starting point. Once you’re connected, we’ll confirm this wallet already owns a handle and then create a second creator in another browser.”
+  > “First, connect a Solana wallet. ping402 is a paid inbox, so wallet identity is the starting point.”
 
 ## 2. Confirm This Wallet Already Owns a Handle (Using the Dashboard)
 - **URL:** /dashboard
@@ -26,7 +26,7 @@ One-liner: A creator-paid inbox on Solana where x402 enforces pay-per-message de
   5. **Action:** Pause on the dashboard metric cards — confirm **“Revenue”** and status counts (e.g., **“New”**, **“Replied”**, **“Archived”**) are visible.
   6. **Verify on-screen:** The dashboard remains accessible without redirecting back to **/owner-signin**, confirming you have an active creator session for this wallet.
 - **Voiceover:**
-  > “To confirm this wallet already has an associated username, we go straight to the creator dashboard. If the dashboard loads and shows the creator context, that’s our proof: this wallet is signed in and mapped to a handle, and we’re ready to use the app as a creator.”
+  > “To confirm this wallet already has an associated username, we go straight to the creator dashboard. If the dashboard loads and shows the creator context, this wallet is signed in and mapped to a handle, and we’re ready to use the app as a creator.”
 
 ## 3. Open a Second Browser Session for a New Creator
 - **URL:** /
