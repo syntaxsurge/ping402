@@ -1,184 +1,154 @@
 Project: ping402  
-One-liner: A paid inbox for Solana creators—powered by x402 paywalls and Solana USDC settlement, with an in-app Solana Pay checkout and a creator inbox dashboard.
+One-liner: A creator-paid inbox on Solana where x402 enforces pay-per-message delivery and Solana Pay settles USDC instantly with a public receipt.
 
-## 1. Home: Connect Wallet + Theme + Primary CTAs
+## 1. Connect Wallet First
 - **URL:** /
-- **Shot:** Marketing landing page with the ping402 brand header (nav links, theme toggle, wallet connect), a hero section, and the primary call-to-action to start a ping.
+- **Shot:** Home page header with the wallet button, ping402 branding, and the main CTAs visible.
+- **Steps:**
+  1. **Current page:** New browser window (Window A) — confirm the address bar is empty.
+  2. **Navigate:** Open URL directly: https://pingx402.vercel.app/ → lands on `/`.
+  3. **Current page:** `/` — confirm the header shows **“Connect wallet”**.
+  4. **Action:** Click **“Connect wallet”** in the header — wait for the wallet modal to appear.
+  5. **Current page:** `/` — confirm the wallet modal lists wallet options.
+  6. Click **“Phantom”** — wait for the header to update.
+  7. **Verify on-screen:** The header wallet button shows a shortened address (connected state), not **“Connect wallet”**.
+- **Voiceover:**
+  > “First, connect a Solana wallet. ping402 is a paid inbox, so wallet identity is the starting point. Once you’re connected, we’ll confirm this wallet already owns a handle and then create a second creator in another browser.”
+
+## 2. Confirm This Wallet Already Owns a Handle (Using the Dashboard)
+- **URL:** /dashboard
+- **Shot:** Creator dashboard showing the handle identity context and KPI cards (Revenue, Total, New, Replied, Archived).
+- **Steps:**
+  1. **Current page:** `/` — confirm the header shows your connected wallet address.
+  2. **Navigate:** Open URL directly: https://pingx402.vercel.app/dashboard → lands on `/dashboard`.
+  3. **Current page:** `/dashboard` — confirm the heading **“Dashboard”** is visible.
+  4. **Verify on-screen:** Confirm the dashboard shows creator identity context (a visible **@handle** label or creator profile section indicating the wallet is signed in and associated with a handle).
+  5. **Action:** Pause on the dashboard metric cards — confirm **“Revenue”** and status counts (e.g., **“New”**, **“Replied”**, **“Archived”**) are visible.
+  6. **Verify on-screen:** The dashboard remains accessible without redirecting back to **/owner-signin**, confirming you have an active creator session for this wallet.
+- **Voiceover:**
+  > “To confirm this wallet already has an associated username, we go straight to the creator dashboard. If the dashboard loads and shows the creator context, that’s our proof: this wallet is signed in and mapped to a handle, and we’re ready to use the app as a creator.”
+
+## 3. Open a Second Browser Session for a New Creator
+- **URL:** /
+- **Shot:** A second browser window (Window B) opens the same site in a fresh session; wallet is not connected yet.
+- **Steps:**
+  1. **Current page:** Window A `/dashboard` — confirm the heading **“Dashboard”** is visible.
+  2. **Navigate:** Open a new browser window (Window B) → open URL directly: https://pingx402.vercel.app/ → lands on `/`.
+  3. **Current page:** Window B `/` — confirm the header shows **“Connect wallet”** (disconnected state).
+  4. **Verify on-screen:** Confirm Window B is a fresh session because it does not show the connected wallet address.
+- **Voiceover:**
+  > “Now we open ping402 in a second browser window to simulate a second user. This fresh session starts disconnected, which lets us connect a different wallet and claim a brand-new handle.”
+
+## 4. Claim a New Handle in Window B
+- **URL:** /owner-signin
+- **Shot:** Creator sign-in page in Window B showing wallet connect state, handle fields, and the “Sign in / Claim handle” action.
+- **Steps:**
+  1. **Current page:** Window B `/` — confirm the header shows **“Connect wallet”**.
+  2. **Navigate:** Open URL directly: https://pingx402.vercel.app/owner-signin → lands on `/owner-signin`.
+  3. **Current page:** Window B `/owner-signin` — confirm the heading **“Creator sign-in”** is visible.
+  4. **Action:** Click **“Connect wallet”** — confirm the wallet modal appears.
+  5. **Action:** Click **“Phantom”** — approve connection with a different wallet account in Phantom.
+  6. **Verify on-screen:** Confirm the header wallet button shows a shortened address that is different from Window A.
+  7. **Enter values:**
+     - Handle = solana_builder
+     - Display name = Solana Builder
+     - Bio = I respond fast to priority pings.
+  8. Click **“Sign in / Claim handle”** — approve the signature request in the wallet.
+  9. **Verify on-screen:** You land on `/dashboard` and the heading **“Dashboard”** is visible.
+- **Voiceover:**
+  > “In the second window, we onboard a new creator. We connect a second wallet, claim the handle ‘solana_builder’, and approve a one-time Solana signature. The app immediately creates a creator session and drops us into the dashboard.”
+
+## 5. Open the Second Creator’s Public Profile
+- **URL:** /u/solana_builder
+- **Shot:** Public profile for @solana_builder showing tier options (Standard, Priority, VIP) and a clear ‘send a paid ping’ UI.
+- **Steps:**
+  1. **Current page:** Window B `/dashboard` — confirm **“Dashboard”** is visible.
+  2. **Navigate:** Open URL directly: https://pingx402.vercel.app/u/solana_builder → lands on `/u/solana_builder`.
+  3. **Current page:** `/u/solana_builder` — confirm the profile shows **“@solana_builder”**.
+  4. **Verify on-screen:** Confirm tier options are visible (Standard / Priority / VIP).
+- **Voiceover:**
+  > “With the handle claimed, the creator instantly has a public profile page. This is the consumer-facing surface: a simple, tiered interface that anyone can use to pay to reach this creator.”
+
+## 6. Send a Paid Ping from Window A to the New Creator
+- **URL:** /ping/priority?to=solana_builder
+- **Shot:** Window A composes a Priority ping to @solana_builder, showing the message form and the ‘Pay & send ping’ action.
+- **Steps:**
+  1. **Current page:** Window A `/dashboard` — confirm **“Dashboard”** is visible.
+  2. **Navigate:** Open URL directly: https://pingx402.vercel.app/ping/priority?to=solana_builder → lands on `/ping/priority`.
+  3. **Current page:** `/ping/priority` — confirm the heading shows **“Priority ping ($0.05)”** and recipient is **solana_builder**.
+  4. **Enter values:**
+     - Your name = Jamie
+     - Contact = jamie@example.com
+     - Message = Hey Solana Builder — quick test: can you confirm you received this paid ping?
+  5. Click **“Pay & send ping”** — wait for the checkout sheet to open.
+  6. **Verify on-screen:** Confirm a sheet appears titled **“Checkout Solana Pay”** showing the tier and amount.
+- **Voiceover:**
+  > “Now we do the real marketplace interaction. In Window A, we send a paid Priority ping to the new creator. We write a short message and hit ‘Pay & send ping’ to trigger payment and delivery.”
+
+## 7. Complete Solana Pay Checkout and Get a Public Receipt
+- **URL:** /r/[messageId]
+- **Shot:** Wallet transaction approval followed by the Receipt page and a Solana Explorer transaction link.
+- **Steps:**
+  1. **Current page:** Window A `/ping/priority` — confirm the checkout UI is visible.
+  2. **Action:** Click **“Pay now”** — approve the transaction in the connected wallet.
+  3. **Verify on-screen:** Confirm the checkout status changes to **“Payment confirmed”**.
+  4. **Navigate:** Wait for redirect to `/r/[messageId]` — confirm the heading **“Receipt”** is visible.
+  5. **Action:** Click the payment transaction signature link — confirm it opens Solana Explorer in a new tab.
+  6. **Verify on-screen:** Confirm Solana Explorer displays the same transaction signature shown on the receipt.
+- **Voiceover:**
+  > “Payment confirms quickly on Solana, and ping402 generates a public receipt immediately. That receipt links to Solana Explorer for on-chain verification, which is what makes this flow trustworthy and production-ready.”
+
+## 8. Confirm Delivery in Window B Inbox + Update Status
+- **URL:** /inbox
+- **Shot:** Window B inbox list shows the new message; message detail view shows the content and status actions.
+- **Steps:**
+  1. **Current page:** Window B `/dashboard` — confirm **“Dashboard”** is visible.
+  2. **Navigate:** Open URL directly: https://pingx402.vercel.app/inbox → lands on `/inbox`.
+  3. **Current page:** `/inbox` — confirm the heading **“Inbox”** is visible and a message list is shown.
+  4. **Verify on-screen:** Confirm a new message row appears that matches the ping content and tier.
+  5. **Action:** Click that message row → lands on `/inbox/[messageId]`.
+  6. **Current page:** `/inbox/[messageId]` — confirm the message body is visible.
+  7. Click **“Mark replied”** — wait for the status to update.
+  8. **Verify on-screen:** Confirm the status shows **Replied**.
+- **Voiceover:**
+  > “Back in Window B, the creator sees the paid ping arrive in their inbox immediately. We open the message, confirm the text, then mark it replied. This proves the full end-to-end workflow for a creator business inbox.”
+
+## 9. Prove x402 Discovery + 402 Enforcement (No Manual API Reading Required)
+- **URL:** /api/x402/discovery/resources
+- **Shot:** Discovery JSON in the browser plus a terminal curl showing the ping endpoint returns 402 when unpaid.
+- **Steps:**
+  1. **Current page:** Window A `/r/[messageId]` — confirm the **“Receipt”** heading is visible.
+  2. **Navigate:** Open URL directly: https://pingx402.vercel.app/api/x402/discovery/resources → lands on `/api/x402/discovery/resources`.
+  3. **Current page:** `/api/x402/discovery/resources` — confirm JSON renders and includes a **resources** list.
+  4. **Navigate:** Switch to a Terminal window — confirm you’re at a shell prompt.
+  5. **Action:** Run `curl -i -X POST "https://pingx402.vercel.app/api/ping/send?tier=standard" -H "Content-Type: application/json" -d "{\"toHandle\":\"solana_builder\",\"message\":\"test\"}"` — wait for headers to print.
+  6. **Verify on-screen:** Confirm the response includes **HTTP/1.1 402 Payment Required**.
+- **Voiceover:**
+  > “This is the x402 proof: we can discover paywalled resources, and the ping endpoint returns 402 Payment Required when unpaid. That’s why x402 is foundational—without it, paid delivery doesn’t exist.”
+
+## 10. Health, Onboarding APIs, and SEO Routes
+- **URL:** /api/health
+- **Shot:** Health JSON plus handle search/lookup, and robots + sitemap endpoints for production SEO.
 - **Steps:**
   1. **Current page:** New browser tab — confirm the address bar is empty.
-  2. **Navigate:** Open URL directly: `http://localhost:3000/` → lands on `/`.
-  3. **Current page:** `/` — confirm the hero shows **“ping402”** and the header shows **“Send a ping”** plus an **Account** menu.
-  4. **Action:** Click **“Toggle theme”** in the header → wait for the UI to switch.
-  5. **Current page:** `/` — confirm the background/foreground colors visibly flip (light ↔ dark) while **“ping402”** remains on-screen.
-  6. **Action:** Open the **Account** menu → click **“Connect wallet”** → select **“Phantom”** → approve the connection in Phantom.
-  7. **Verify on-screen:** Re-open the **Account** menu and confirm it shows a connected wallet address plus a **“Disconnect wallet”** option.
+  2. **Navigate:** Open URL directly: https://pingx402.vercel.app/api/health → lands on `/api/health`.
+  3. **Current page:** `/api/health` — confirm JSON includes **"ok": true** and **"service": "ping402"**.
+  4. **Navigate:** Open URL directly: https://pingx402.vercel.app/api/handles/search?query=solana → lands on `/api/handles/search`.
+  5. **Verify on-screen:** Confirm JSON includes suggested handles.
+  6. **Navigate:** Open URL directly: https://pingx402.vercel.app/api/handles/lookup?handle=solana_builder → lands on `/api/handles/lookup`.
+  7. **Verify on-screen:** Confirm JSON indicates the handle exists (or is taken).
+  8. **Navigate:** Open URL directly: https://pingx402.vercel.app/robots.txt → lands on `/robots.txt`.
+  9. **Verify on-screen:** Confirm the response contains **User-agent:**.
+  10. **Navigate:** Open URL directly: https://pingx402.vercel.app/sitemap.xml → lands on `/sitemap.xml`.
+  11. **Verify on-screen:** Confirm the response is XML and includes `<urlset`.
 - **Voiceover:**
-  > “This is ping402—a paid inbox for creators on Solana. Right from the homepage, I can switch between light and dark mode and connect my Solana wallet in one click. The header stays consistent everywhere, so the user always knows where to start: send a ping, or sign in as a creator.”
-
-## 2. How It Works: End-to-End x402 + Solana Payment Flow
-- **URL:** /#how-it-works
-- **Shot:** Homepage explainer section showing the end-to-end flow: paywalled access with x402, Solana settlement, and how the receipt + inbox are produced.
-- **Steps:**
-  1. **Current page:** `/` — confirm the header is visible and you’re still connected (wallet address is shown).
-  2. **Navigate:** Click **“How it works”** in the header → scrolls to `/#how-it-works`.
-  3. **Current page:** `/#how-it-works` — confirm the section heading shows **“How it works”**.
-  4. **Action:** Scroll to the section that explains **x402 paywalled requests** → pause when the diagram/text describing the payment requirement is fully visible.
-  5. **Current page:** `/#how-it-works` — confirm the section describing **Solana USDC settlement** is visible.
-  6. **Action:** Scroll to the part explaining the **receipt + creator inbox** lifecycle → pause on the part that mentions the user gets a receipt and the creator gets an inbox entry.
-  7. **Verify on-screen:** The page clearly shows the end-to-end sequence: user → payment requirement → Solana payment → message delivered → receipt/inbox.
-- **Voiceover:**
-  > “Before we even send anything, this page makes it crystal clear: ping402 is built on two pillars—x402 for paywalled access, and Solana for fast, cheap USDC settlement. The user pays to unlock delivery, the app produces a receipt, and the creator gets a real inbox workflow, not just a demo.”
-
-## 3. Fund: Make Devnet Ready in Minutes (SOL + Devnet USDC)
-- **URL:** /#funding
-- **Shot:** Funding section with step-by-step guidance for getting SOL and devnet USDC so the paywall and checkout can succeed on devnet.
-- **Steps:**
-  1. **Current page:** `/#how-it-works` — confirm the heading **“How it works”** is still visible.
-  2. **Navigate:** Click **“Funding”** in the header → scrolls to `/#funding`.
-  3. **Current page:** `/#funding` — confirm the section heading shows **“Funding”**.
-  4. **Action:** Click the on-page link/button labeled **“Solana Faucet”** (or equivalent faucet link shown on the page) → confirm a faucet page opens in a new tab.
-  5. **Current page:** Faucet tab — confirm you see a faucet UI that can request devnet SOL.
-  6. **Navigate:** Switch back to the `/#funding` tab → confirm the **“Funding”** heading is visible again.
-  7. **Verify on-screen:** The section clearly shows what you need: a funded wallet for devnet payments.
-- **Voiceover:**
-  > “For judges and first-time users, funding is usually the biggest blocker—so ping402 includes a clear funding section right on the homepage. The goal is simple: get devnet SOL and devnet USDC so the user can complete a paid action immediately. Now we’re ready to actually use the app.”
-
-## 4. Handle Discovery: Search a Handle and Choose the Right Path
-- **URL:** /ping
-- **Shot:** Handle search page with a search input, results/suggestions, and clear CTAs to either view an inbox profile or start sending a ping.
-- **Steps:**
-  1. **Current page:** `/#funding` — confirm the **“Funding”** heading is visible.
-  2. **Navigate:** Click **“Send a Ping”** in the header → lands on `/ping`.
-  3. **Current page:** `/ping` — confirm the page heading shows **“Send a ping”** (or **“Ping”**).
-  4. **Action:** Click the input labeled **“Handle”** (or **“Search handle”**) to focus it.
-  5. **Current page:** `/ping` — confirm the cursor is in the handle input.
-  6. **(Only if needed) Enter values:**
-     - Handle = `ping402`
-  7. **Current page:** `/ping` — confirm the handle input now shows `ping402`.
-  8. **Action:** Click **“Search”** → wait for results to load.
-  9. **Verify on-screen:** A result card/row appears for `ping402`, showing a clear next action such as **“View profile”** or **“Send ping”**.
-- **Voiceover:**
-  > “This is the consumer entry point: you don’t need to understand crypto to use ping402. You just search a handle like ‘ping402’ and the app immediately gives you a clean path forward—view the public inbox profile, or go straight into sending a paid ping.”
-
-## 5. Public Inbox Profile: Pricing Tiers + Trust Signals
-- **URL:** /u/[handle]
-- **Shot:** Public profile page for the handle, showing creator identity, tier cards (standard/priority/vip), and the primary send action.
-- **Steps:**
-  1. **Current page:** `/ping` — confirm the search result for `ping402` is visible.
-  2. **Navigate:** Click **“View profile”** on the `ping402` result → lands on `/u/ping402`.
-  3. **Current page:** `/u/ping402` — confirm the heading shows **“@ping402”** (or a profile title containing `ping402`).
-  4. **Action:** Scroll just enough to show the tier cards labeled **“standard”**, **“priority”**, and **“vip”** (or equivalent tier labels).
-  5. **Current page:** `/u/ping402` — confirm the tier pricing and a send button are visible.
-  6. **Action:** Click the tier CTA labeled **“Send standard ping”** (or **“Send Standard”**) → lands on `/ping/standard`.
-  7. **Verify on-screen:** The compose page loads and shows **“Standard”** as the selected tier.
-- **Voiceover:**
-  > “Every creator gets a clean public profile that feels like a real product—clear identity, clear pricing, and tiered urgency. This is where Solana’s speed and low fees shine: small USDC payments are practical, and the user can choose the tier that matches how fast they need a reply.”
-
-## 6. Compose + Pay: In-App Solana Pay Checkout for a Standard Ping
-- **URL:** /ping/[tier]
-- **Shot:** Compose page for the tier with a message form and a checkout panel/modal that confirms amount, network, and wallet before paying.
-- **Steps:**
-  1. **Current page:** `/u/ping402` — confirm the tier cards are visible.
-  2. **Navigate:** (If you aren’t already there) Click **“Send standard ping”** → lands on `/ping/standard`.
-  3. **Current page:** `/ping/standard` — confirm the page shows **“Standard”** and the recipient shows `ping402`.
-  4. **(Only if needed) Enter values:**
-     - Message = `Hey ping402 — quick question: what’s your best tip for integrating x402 with Solana Pay in a consumer app?`
-     - Sender name = `Alex`
-     - Sender contact = `@alex402`
-  5. **Current page:** `/ping/standard` — confirm the message text is visible in the form.
-  6. **Action:** Click **“Continue”** (or **“Checkout”**) → wait for the checkout UI to appear.
-  7. **Current page:** Checkout UI on `/ping/standard` — confirm you see a payment summary with **Amount**, **Network**, and the connected **Wallet**.
-  8. **Action:** Click **“Pay now”** → approve the transaction in your connected wallet when prompted.
-  9. **Verify on-screen:** A visible state change confirms payment (e.g., **“Payment confirmed”**), then the app redirects to a receipt page `/r/[messageId]`.
-- **Voiceover:**
-  > “Now we do the core consumer flow: compose a standard ping and pay in USDC on Solana. I’ll send the message, set my name to ‘Alex’ and contact to ‘@alex402’, then hit Checkout. The app shows the exact amount, network, and my connected wallet—then I click Pay now, approve, and we immediately land on a receipt. Fast, clean, and user-friendly.”
-
-## 7. Receipt: Public Proof + Shareable Confirmation
-- **URL:** /r/[messageId]
-- **Shot:** Receipt page showing a success state, message details, and a link out to the on-chain transaction.
-- **Steps:**
-  1. **Current page:** `/ping/standard` — confirm the post-payment success state is shown or you’ve been redirected.
-  2. **Navigate:** (If needed) Open URL directly from the address bar shown after payment: `http://localhost:3000/r/[messageId]` → lands on `/r/[messageId]`.
-  3. **Current page:** `/r/[messageId]` — confirm the page heading shows **“Receipt”** (or **“Payment confirmed”**).
-  4. **Action:** Click the link labeled **“View transaction”** (or an explorer link) → confirm a Solana explorer tab opens.
-  5. **Current page:** Explorer tab — confirm you can see the transaction signature and token transfer details.
-  6. **Navigate:** Switch back to the receipt tab → confirm the receipt is still visible.
-  7. **Verify on-screen:** The receipt displays the handle, tier, and a confirmed payment state that can be shared.
-- **Voiceover:**
-  > “Receipts matter for trust and for business. This page proves the payment happened, links directly to the on-chain transaction, and gives the user a clean, shareable confirmation that their ping was delivered through a paid, verifiable flow—not a black box.”
-
-## 8. Creator Onboarding: Claim a Handle + Sign In with a Solana Signature
-- **URL:** /owner-signin
-- **Shot:** Creator sign-in/claim page showing handle claim UI and the wallet signature-based login; includes a clear success redirect into the creator workspace.
-- **Steps:**
-  1. **Current page:** `/r/[messageId]` — confirm the receipt heading is visible.
-  2. **Navigate:** Click **“Creator Sign In”** in the header → lands on `/owner-signin`.
-  3. **Current page:** `/owner-signin` — confirm the page heading shows **“Creator sign in”** (or **“Claim your handle”**).
-  4. **(Only if needed) Enter values:**
-     - Handle = `alex402`
-     - Display name = `Alex`
-     - Bio = `Building consumer apps on Solana + x402.`
-  5. **Current page:** `/owner-signin` — confirm the handle field shows `alex402`.
-  6. **Action:** Click **“Claim handle”** (or **“Sign in”**) → approve the **signature request** in your Solana wallet.
-  7. **Current page:** Wallet prompt — confirm you see a signature request referencing the handle `alex402` → click **“Approve”** in the wallet.
-  8. **Verify on-screen:** You land on `/dashboard` and see a visible confirmation like **“Signed in as @alex402”** (toast, header badge, or dashboard heading).
-- **Voiceover:**
-  > “Creators onboard with a simple Solana signature—no passwords, no email friction. I claim ‘alex402’, approve a one-time signature, and ping402 establishes my creator session. This is a real, production-ready auth flow that feels native to the Solana ecosystem.”
-
-## 9. Creator Dashboard: Revenue + Status Counts in One View
-- **URL:** /dashboard
-- **Shot:** Dashboard showing key business metrics: revenue and message status counts (pending/new/replied/archived), plus navigation into the inbox.
-- **Steps:**
-  1. **Current page:** `/owner-signin` — confirm you just completed sign-in (or you’re already redirected).
-  2. **Navigate:** (If needed) Open URL directly: `http://localhost:3000/dashboard` → lands on `/dashboard`.
-  3. **Current page:** `/dashboard` — confirm the dashboard heading shows **“Dashboard”** and your handle (e.g., `@alex402`).
-  4. **Action:** Hover or pause on the metric cards labeled **“Revenue”** and the status counts (e.g., **“New”**, **“Replied”**, **“Archived”**).
-  5. **Current page:** `/dashboard` — confirm a revenue value and counts are visible (even if small).
-  6. **Action:** Click **“Inbox”** in the dashboard navigation → lands on `/inbox`.
-  7. **Verify on-screen:** The inbox page loads and shows a list/table of messages.
-- **Voiceover:**
-  > “This is where ping402 becomes a business, not a hackathon toy. The dashboard turns every paid ping into real metrics—revenue and message statuses—so creators can run their inbox like a product. Now let’s jump into the inbox and manage messages.”
-
-## 10. Creator Inbox: Triage + Message Detail Actions
-- **URL:** /inbox
-- **Shot:** Inbox list with filters/tabs by status, plus opening a message detail view with actions to update status.
-- **Steps:**
-  1. **Current page:** `/dashboard` — confirm the **“Dashboard”** heading is visible.
-  2. **Navigate:** Click **“Inbox”** in the dashboard navigation → lands on `/inbox`.
-  3. **Current page:** `/inbox` — confirm the inbox heading shows **“Inbox”** and a list of messages.
-  4. **Action:** Click the first message row in the list (the row shows a message preview and tier) → lands on `/inbox/[messageId]`.
-  5. **Current page:** `/inbox/[messageId]` — confirm you see the full message content and metadata (tier, payer, or receipt link).
-  6. **Action:** Click **“Mark as replied”** → wait for a visible confirmation (toast or badge change).
-  7. **Current page:** `/inbox/[messageId]` — confirm the status badge updates to **“Replied”**.
-  8. **Action:** Click **“Back to Inbox”** (or **“Inbox”** in the nav) → lands on `/inbox`.
-  9. **Verify on-screen:** The message row is now reflected under the correct status filter/tab (e.g., it disappears from “New” and appears in “Replied”).
-- **Voiceover:**
-  > “Creators need a real workflow: not just receiving messages, but managing them. Here I open a message, mark it as replied, and the UI immediately reflects the new status. This is a complete lifecycle—from paid delivery to inbox triage—and it’s exactly what a consumer-facing Solana creator product should feel like.”
-
-## 11. API + SEO Proof: Health, Handles, Robots, Sitemap, OpenGraph
-- **URL:** /api/health
-- **Shot:** A fast “ops + SEO” pass showing public endpoints, handle lookup/search APIs, robots/sitemap, and the dynamic OpenGraph image route.
-- **Steps:**
-  1. **Current page:** `/inbox` — confirm you see the inbox list.
-  2. **Navigate:** Open URL directly: `http://localhost:3000/api/health` → lands on `/api/health`.
-  3. **Current page:** `/api/health` — confirm you see JSON with an OK status (e.g., `ok: true`).
-  4. **Navigate:** Open URL directly: `http://localhost:3000/api/handles/search?query=ping` → confirm you see JSON results with handle suggestions.
-  5. **Navigate:** Open URL directly: `http://localhost:3000/api/handles/lookup?handle=ping402` → confirm you see JSON indicating availability/ownership.
-  6. **Navigate:** Open URL directly: `http://localhost:3000/api/x402/discovery/resources` → confirm you see JSON that lists available paywalled resources.
-  7. **Navigate:** Open URL directly: `http://localhost:3000/robots.txt` → confirm the response starts with **“User-agent:”**.
-  8. **Navigate:** Open URL directly: `http://localhost:3000/sitemap.xml` → confirm the response starts with **`<?xml`** and contains URLs.
-  9. **Navigate:** Open URL directly: `http://localhost:3000/u/ping402/opengraph-image` → confirm a social share image renders in the browser.
-  10. **Verify on-screen:** You’ve shown production-grade endpoints: health, discovery APIs, and SEO metadata routes—all functioning.
-- **Voiceover:**
-  > “To round it out, ping402 ships like a real production app: health checks, handle search and lookup APIs for onboarding UX, and proper SEO routes—robots, sitemap, and dynamic OpenGraph images for profile sharing. This is the polish that makes it feel alive and ready for mainnet.”
+  > “Finally, we validate production readiness: health checks, handle onboarding APIs, and SEO routes for indexing. This rounds out ping402 as a real consumer app with a real payments backbone.”
 
 ## Final Wrap-Up
 - **URL:** /dashboard
-- **Shot:** Creator dashboard visible with connected wallet, handle identity, and at least one message count/revenue signal; optionally keep a receipt tab visible in the browser.
+- **Shot:** Window B creator dashboard showing activity and the connected wallet in the header.
 - **Steps:**
-  1. **Current page:** `/u/ping402/opengraph-image` — confirm the OpenGraph image is visible.
-  2. **Navigate:** Open URL directly: `http://localhost:3000/dashboard` → lands on `/dashboard`.
-  3. **Current page:** `/dashboard` — confirm the dashboard heading shows **“Dashboard”** and your handle (e.g., `@alex402`) is visible.
-  4. **Verify final state:** Confirm the header menu shows your handle and wallet status, the dashboard shows revenue/status cards, and the inbox is accessible via **“Inbox”** navigation.
+  1. **Current page:** Window B `/dashboard` — confirm the heading **“Dashboard”** is visible.
+  2. **Verify final state:** Confirm the dashboard and inbox are accessible for the claimed creator, and the flow is proven end-to-end: wallet identity → handle claim → paid ping via Solana Pay → receipt → inbox triage, with x402 enforcement backing the paid endpoint.
 - **Voiceover:**
-  > “In this demo, we proved the full journey: users discover a handle, pay in Solana USDC, get a verifiable receipt, and creators manage a real inbox with revenue tracking. x402 powers the paywall baseline, Solana powers settlement, and the UI is built for real users. Try it at [DEMO_URL].”
+  > “We proved a real two-user flow: an existing creator wallet is already signed in, a second wallet claims a new handle, the first wallet pays to send a ping using Solana Pay, and the second creator triages it in their inbox—while x402 enforces pay-per-action at the API level. Try it at https://pingx402.vercel.app/.”
