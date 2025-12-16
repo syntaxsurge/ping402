@@ -56,7 +56,7 @@ One-liner: A creator-paid inbox on Solana where x402 enforces pay-per-message de
   8. Click **“Sign in / Claim handle”** — approve the signature request in the wallet.
   9. **Verify on-screen:** You land on `/dashboard` and the heading **“Dashboard”** is visible.
 - **Voiceover:**
-  > “We onboard a new creator: connect a second wallet, claim the handle ‘solana_builder’, sign once, and we’re inside the dashboard immediately.”
+  > “We onboard a new creator: claim the handle ‘solana_builder’, sign once, and we’re inside the dashboard immediately.”
 
 ## 5. Open the Second Creator’s Public Profile
 - **URL:** /u/solana_builder
