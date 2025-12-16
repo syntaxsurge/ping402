@@ -364,8 +364,8 @@ Select **one** backend stack (Drizzle+Supabase or Convex) per project by default
 - `GET /` — marketing landing page
 - `GET /how-it-works` — redirects to the home section (`/#how-it-works`)
 - `GET /fund` — redirects to the home section (`/#funding`)
-- `GET /demo-video` — redirects to the configured demo video URL
-- `GET /pitch-deck` — redirects to the configured pitch deck URL
+- `GET /demo-video` — redirects to the configured demo video URL (`DEMO_VIDEO_URL`)
+- `GET /pitch-deck` — redirects to the configured pitch deck URL (`PITCH_DECK_URL`, only when set)
 - `GET /ping` — handle search + send/claim entrypoint
 - `GET /u/[handle]` — public inbox profile page
 - `GET /u/[handle]/opengraph-image` — dynamic OpenGraph image for profile sharing
