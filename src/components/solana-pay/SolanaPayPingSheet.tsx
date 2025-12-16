@@ -9,15 +9,14 @@ import { useConnection, useWallet } from "@solana/wallet-adapter-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { Separator } from "@/components/ui/separator";
 import { useWalletModal } from "@/components/solana/WalletModal";
-import {
-  Sheet,
-  SheetContent,
-  SheetDescription,
-  SheetHeader,
-  SheetTitle,
-} from "@/components/ui/sheet";
 import { getPingTierConfig, type PingTier } from "@/lib/ping/tiers";
 import { buildSolanaPayTransferTransaction } from "@/lib/solana/pay";
 
@@ -388,185 +387,240 @@ export function SolanaPayPingSheet({
         Pay &amp; send ping
       </Button>
 
-      <Sheet open={open} onOpenChange={(next) => (next ? setOpen(true) : closeSheet())}>
-        <SheetContent side="right" className="w-full max-w-md">
-          <SheetHeader>
-            <div className="flex items-center justify-between gap-3">
-              <SheetTitle>Checkout</SheetTitle>
-              <Badge variant="secondary">Solana Pay</Badge>
-            </div>
-            <SheetDescription>
-              Pay <span className="font-mono">@{toHandle}</span> for a{" "}
-              <span className="font-medium">{tierConfig.label}</span> ping.
-            </SheetDescription>
-          </SheetHeader>
-
-          <div className="mt-6 space-y-4">
-            {error ? (
-              <div className="rounded-md border border-destructive/40 bg-destructive/10 p-3 text-xs text-destructive">
-                {error}
+      <Dialog open={open} onOpenChange={(next) => (next ? setOpen(true) : closeSheet())}>
+        <DialogContent className="max-w-3xl overflow-hidden p-0">
+          <div className="max-h-[calc(100vh-6rem)] overflow-y-auto">
+            <div className="flex flex-wrap items-start justify-between gap-4 border-b bg-background/80 p-6 backdrop-blur">
+              <div className="min-w-0 space-y-1 pr-10">
+                <DialogTitle className="text-xl">Checkout</DialogTitle>
+                <DialogDescription className="text-sm">
+                  Pay <span className="font-mono">@{toHandle}</span> for a{" "}
+                  <span className="font-medium">{tierConfig.label}</span> ping.
+                </DialogDescription>
               </div>
-            ) : null}
+              <Badge variant="secondary" className="h-fit">
+                Solana Pay
+              </Badge>
+            </div>
 
-            {creating ? (
-              <div className="text-sm text-muted-foreground">Creating checkout…</div>
-            ) : null}
-
-            {intent ? (
+            <div className="grid gap-6 p-6 md:grid-cols-[1.1fr_0.9fr]">
               <div className="space-y-4">
-                <Card className="bg-muted/20">
-                  <CardContent className="space-y-3 p-4 text-sm">
-                    <div className="flex items-center justify-between gap-3">
-                      <div className="text-muted-foreground">Amount</div>
-                      <div className="font-semibold tabular-nums">{intent.amount}</div>
-                    </div>
-                    <div className="flex items-center justify-between gap-3">
-                      <div className="text-muted-foreground">Tier</div>
-                      <div className="font-medium">{tierConfig.label}</div>
-                    </div>
-                    <Separator />
-                    <div className="space-y-1">
-                      <div className="text-xs text-muted-foreground">Recipient</div>
-                      <div className="break-all font-mono text-xs" title={recipientAddress ?? undefined}>
-                        {recipientAddress ? shortAddress(recipientAddress) : "—"}
-                      </div>
-                    </div>
-                    <div className="space-y-1">
-                      <div className="text-xs text-muted-foreground">Asset mint</div>
-                      <div className="break-all font-mono text-[11px] text-muted-foreground">
-                        {intent.asset}
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
+                {error ? (
+                  <div className="rounded-md border border-destructive/40 bg-destructive/10 p-3 text-xs text-destructive">
+                    {error}
+                  </div>
+                ) : null}
 
-                <Card className="bg-muted/20">
-                  <CardContent className="space-y-3 p-4 text-sm">
-                    <div className="flex items-center justify-between gap-3">
-                      <div className="font-medium">Wallet</div>
-                      {connectedAddress ? (
-                        <Button type="button" variant="ghost" size="sm" onClick={() => setVisible(true)}>
-                          Change
-                        </Button>
-                      ) : (
-                        <Button type="button" variant="outline" size="sm" onClick={() => setVisible(true)}>
-                          Connect
-                        </Button>
-                      )}
-                    </div>
+                {creating ? (
+                  <Card className="bg-muted/20">
+                    <CardContent className="p-4 text-sm text-muted-foreground">
+                      Creating checkout…
+                    </CardContent>
+                  </Card>
+                ) : null}
 
-                    {connectedAddress ? (
-                      <div className="space-y-1">
-                        <div className="break-all font-mono text-xs" title={connectedAddress}>
-                          {connectedAddress}
+                {intent ? (
+                  <>
+                    <Card className="bg-muted/20">
+                      <CardContent className="space-y-3 p-4 text-sm">
+                        <div className="flex items-center justify-between gap-3">
+                          <div className="text-muted-foreground">Amount</div>
+                          <div className="font-semibold tabular-nums">{intent.amount}</div>
                         </div>
-                        {balancesLoading ? (
-                          <div className="text-xs text-muted-foreground">Loading balance…</div>
-                        ) : balances && tokenBalanceText && requiredTokenBalanceText ? (
-                          <div className="text-xs text-muted-foreground">
-                            Balance {tokenBalanceText} · Required {requiredTokenBalanceText}
-                            {hasEnoughToken === false ? (
-                              <span className="text-destructive"> · Insufficient</span>
-                            ) : null}
+                        <div className="flex items-center justify-between gap-3">
+                          <div className="text-muted-foreground">Tier</div>
+                          <div className="font-medium">{tierConfig.label}</div>
+                        </div>
+                        <Separator />
+                        <div className="space-y-1">
+                          <div className="text-xs text-muted-foreground">Recipient</div>
+                          <div
+                            className="break-all font-mono text-xs"
+                            title={recipientAddress ?? undefined}
+                          >
+                            {recipientAddress ? shortAddress(recipientAddress) : "—"}
+                          </div>
+                        </div>
+                        <div className="space-y-1">
+                          <div className="text-xs text-muted-foreground">Asset mint</div>
+                          <div className="break-all font-mono text-[11px] text-muted-foreground">
+                            {intent.asset}
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
+
+                    <Card className="bg-muted/20">
+                      <CardContent className="space-y-3 p-4 text-sm">
+                        <div className="flex items-center justify-between gap-3">
+                          <div className="font-medium">Wallet</div>
+                          <Button
+                            type="button"
+                            variant={connectedAddress ? "ghost" : "outline"}
+                            size="sm"
+                            onClick={() => setVisible(true)}
+                          >
+                            {connectedAddress ? "Change" : "Connect"}
+                          </Button>
+                        </div>
+
+                        {connectedAddress ? (
+                          <div className="space-y-1">
+                            <div className="break-all font-mono text-xs" title={connectedAddress}>
+                              {connectedAddress}
+                            </div>
+                            {balancesLoading ? (
+                              <div className="text-xs text-muted-foreground">Loading balance…</div>
+                            ) : balances && tokenBalanceText && requiredTokenBalanceText ? (
+                              <div className="text-xs text-muted-foreground">
+                                Balance {tokenBalanceText} · Required {requiredTokenBalanceText}
+                                {hasEnoughToken === false ? (
+                                  <span className="text-destructive"> · Insufficient</span>
+                                ) : null}
+                              </div>
+                            ) : (
+                              <div className="text-xs text-muted-foreground">
+                                Balance unavailable. You can still try paying.
+                              </div>
+                            )}
                           </div>
                         ) : (
                           <div className="text-xs text-muted-foreground">
-                            Balance unavailable. You can still try paying.
+                            Connect a wallet to pay in-app, or scan the QR code from any wallet.
                           </div>
                         )}
-                      </div>
-                    ) : (
-                      <div className="text-xs text-muted-foreground">
-                        Connect a wallet to pay in-app, or use the QR code to pay from any wallet.
-                      </div>
-                    )}
-                  </CardContent>
-                </Card>
+                      </CardContent>
+                    </Card>
 
-                <div className="flex flex-col gap-2">
+                    <div className="flex flex-col gap-2">
+                      <Button
+                        type="button"
+                        variant="brand"
+                        disabled={
+                          paying ||
+                          consuming ||
+                          !intent ||
+                          !connected ||
+                          !publicKey ||
+                          Boolean(hasEnoughToken === false)
+                        }
+                        onClick={() => void payWithConnectedWallet()}
+                      >
+                        {paying ? "Approve in wallet…" : "Pay with connected wallet"}
+                      </Button>
+
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        disabled={creating || paying || consuming}
+                        onClick={() => void createIntent()}
+                      >
+                        Restart checkout
+                      </Button>
+                    </div>
+                  </>
+                ) : error ? (
                   <Button
                     type="button"
-                    variant="brand"
-                    disabled={
-                      paying ||
-                      consuming ||
-                      !intent ||
-                      !connected ||
-                      !publicKey ||
-                      Boolean(hasEnoughToken === false)
-                    }
-                    onClick={() => void payWithConnectedWallet()}
-                  >
-                    {paying ? "Approve in wallet…" : "Pay with connected wallet"}
-                  </Button>
-
-                  <Button asChild variant="outline" disabled={!intent.solanaPayUrl || paying || consuming}>
-                    <a href={intent.solanaPayUrl} target="_blank" rel="noreferrer">
-                      {payLinkLabel}
-                    </a>
-                  </Button>
-
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    disabled={creating || paying || consuming}
+                    variant="outline"
+                    disabled={creating}
                     onClick={() => void createIntent()}
                   >
-                    Restart checkout
+                    Retry checkout
                   </Button>
-                </div>
-
-                <div className="flex justify-center rounded-md border bg-background p-4">
-                  <QRCode value={intent.solanaPayUrl} size={220} />
-                </div>
-
-                <Separator />
-
-                <div className="space-y-2 text-sm">
-                  <div className="flex items-center justify-between">
-                    <div className="text-muted-foreground">Status</div>
-                    <div className="font-medium">
-                      {paymentComplete
-                        ? "Payment confirmed"
-                        : confirming
-                          ? "Waiting for payment…"
-                          : "Pending"}
-                    </div>
-                  </div>
-                  {status?.ok && status.status !== "pending" && status.explorerUrl ? (
-                    <a
-                      className="block break-all font-mono text-xs text-primary underline-offset-4 hover:underline"
-                      href={status.explorerUrl}
-                      target="_blank"
-                      rel="noreferrer"
-                    >
-                      {status.paymentTxSig}
-                    </a>
-                  ) : null}
-                  {!status?.ok && localTxSig ? (
-                    <div className="break-all font-mono text-xs text-muted-foreground">
-                      {localTxSig}
-                    </div>
-                  ) : null}
-                </div>
-
-                <Separator />
-
-                <div className="flex flex-col gap-2 text-sm">
-                  {paymentComplete ? (
-                    <div className="rounded-md border bg-muted/30 p-3 text-xs text-muted-foreground">
-                      {consuming ? "Delivering ping…" : "Finalizing delivery…"}
-                    </div>
-                  ) : null}
-                  <Button type="button" variant="outline" onClick={closeSheet} disabled={paying || consuming}>
-                    Close
-                  </Button>
-                </div>
+                ) : creating ? null : (
+                  <Card className="bg-muted/20">
+                    <CardContent className="p-4 text-sm text-muted-foreground">
+                      Preparing checkout…
+                    </CardContent>
+                  </Card>
+                )}
               </div>
-            ) : null}
+
+              <div className="space-y-4">
+                {intent ? (
+                  <>
+                    <Card className="bg-muted/10">
+                      <CardContent className="space-y-3 p-4">
+                        <div className="space-y-1">
+                          <div className="text-sm font-medium">Scan to pay</div>
+                          <div className="text-xs text-muted-foreground">
+                            Open any Solana wallet and scan the QR code to complete payment.
+                          </div>
+                        </div>
+
+                        <div className="flex justify-center rounded-xl border bg-muted/20 p-4">
+                          <div className="w-full max-w-[260px] rounded-lg bg-white p-3 shadow-sm">
+                            <QRCode
+                              value={intent.solanaPayUrl}
+                              bgColor="#FFFFFF"
+                              fgColor="#000000"
+                              style={{ height: "auto", width: "100%" }}
+                            />
+                          </div>
+                        </div>
+
+                        <Button asChild variant="outline" disabled={!intent.solanaPayUrl || paying || consuming}>
+                          <a href={intent.solanaPayUrl} target="_blank" rel="noreferrer">
+                            {payLinkLabel}
+                          </a>
+                        </Button>
+                      </CardContent>
+                    </Card>
+
+                    <Card className="bg-muted/10">
+                      <CardContent className="space-y-2 p-4 text-sm">
+                        <div className="flex items-center justify-between">
+                          <div className="text-muted-foreground">Status</div>
+                          <div className="font-medium">
+                            {paymentComplete
+                              ? "Payment confirmed"
+                              : confirming
+                                ? "Waiting for payment…"
+                                : "Pending"}
+                          </div>
+                        </div>
+
+                        {status?.ok && status.status !== "pending" && status.explorerUrl ? (
+                          <a
+                            className="block break-all font-mono text-xs text-primary underline-offset-4 hover:underline"
+                            href={status.explorerUrl}
+                            target="_blank"
+                            rel="noreferrer"
+                          >
+                            {status.paymentTxSig}
+                          </a>
+                        ) : null}
+
+                        {!status?.ok && localTxSig ? (
+                          <div className="break-all font-mono text-xs text-muted-foreground">
+                            {localTxSig}
+                          </div>
+                        ) : null}
+
+                        {paymentComplete ? (
+                          <div className="rounded-md border bg-muted/30 p-3 text-xs text-muted-foreground">
+                            {consuming ? "Delivering ping…" : "Finalizing delivery…"}
+                          </div>
+                        ) : null}
+                      </CardContent>
+                    </Card>
+
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={closeSheet}
+                      disabled={paying || consuming}
+                    >
+                      Close
+                    </Button>
+                  </>
+                ) : null}
+              </div>
+            </div>
           </div>
-        </SheetContent>
-      </Sheet>
+        </DialogContent>
+      </Dialog>
     </>
   );
 }
