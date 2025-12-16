@@ -1,8 +1,8 @@
 # ping402
 
-[![ping402 demo](public/images/ping402-demo.png)](https://pingx402.vercel.app/demo-video)
+**Paid pings that get answered.** A creator-paid inbox on **Solana** where **x402 (HTTP 402)** enforces pay‑per‑message delivery and **Solana Pay** settles **USDC** with a public on‑chain receipt.
 
-> **Paid pings that get answered.** A creator-paid inbox on **Solana** where **x402 (HTTP 402)** enforces pay‑per‑message delivery and **Solana Pay** settles **USDC** with a public on‑chain receipt.
+[![ping402 demo](public/images/ping402-demo.png)](https://pingx402.vercel.app/demo-video)
 
 **Live:** https://pingx402.vercel.app/  
 **Demo video:** https://pingx402.vercel.app/demo-video  
