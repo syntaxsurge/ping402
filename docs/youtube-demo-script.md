@@ -71,17 +71,26 @@ One-liner: A creator-paid inbox on Solana where x402 enforces pay-per-message de
 
 ## 6. Send a Paid Ping from Window A to the New Creator
 - **URL:** /ping/priority?to=solana_builder
-- **Shot:** Window A composes a Priority ping to @solana_builder, showing the message form and the ‘Pay & send ping’ action.
+- **Shot:** Window A uses the site navigation to find @solana_builder, opens the profile, selects the Priority tier, then sees the compose form and ‘Pay & send ping’.
 - **Steps:**
   1. **Current page:** Window A `/dashboard` — confirm **“Dashboard”** is visible.
-  2. **Navigate:** Open URL directly: https://pingx402.vercel.app/ping/priority?to=solana_builder → lands on `/ping/priority`.
-  3. **Current page:** `/ping/priority` — confirm the heading shows **“Priority ping ($0.05)”** and recipient is **solana_builder**.
-  4. **Enter values:**
-     - Your name = SyntaxSurge
-     - Contact = syntaxsurge@example.com
-     - Message = Hey Solana Builder — quick test: can you confirm you received this paid ping?
-  5. Click **“Pay & send ping”** — wait for the checkout sheet to open.
-  6. **Verify on-screen:** Confirm a sheet appears titled **“Checkout Solana Pay”** showing the tier and amount.
+  2. **Navigate:** Click **“Send a ping”** in the header → lands on `/ping`.
+  3. **Current page:** `/ping` — confirm the heading **“Find or claim a handle”** is visible.
+  4. **Action:** Click the field labeled **“Handle search”** — confirm the cursor is active.
+  5. **Enter values:**
+     - Handle search = solana_builder
+  6. Click **“Search”** — wait for results to refresh.
+  7. **Verify on-screen:** Confirm a result row appears for **@solana_builder** with a visible action labeled **“View profile”**.
+  8. **Navigate:** Click **“View profile”** on the **@solana_builder** result → lands on `/u/solana_builder`.
+  9. **Current page:** `/u/solana_builder` — confirm the profile shows **“@solana_builder”**.
+  10. **Action:** Click **“Priority · $0.05”** on the profile tier buttons → lands on `/ping/priority?to=solana_builder`.
+  11. **Current page:** `/ping/priority` — confirm the heading shows **“Priority ping ($0.05)”** and recipient is **solana_builder**.
+  12. **Enter values:**
+      - Your name = SyntaxSurge
+      - Contact = syntaxsurge@example.com
+      - Message = Hey Solana Builder — quick test: can you confirm you received this paid ping?
+  13. Click **“Pay & send ping”** — wait for the checkout sheet to open.
+  14. **Verify on-screen:** Confirm a sheet appears titled **“Checkout Solana Pay”** showing the tier and amount.
 - **Voiceover:**
   > “Now we do the real marketplace interaction: from Window A, we send a paid Priority ping to solana_builder and trigger Solana-native checkout.”
 
