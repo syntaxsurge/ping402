@@ -13,12 +13,14 @@ import {
   LogOut,
   Menu,
   MessageCircle,
+  RefreshCcw,
   Search,
   Sparkles,
   SquareArrowOutUpRight,
   Wallet,
 } from "lucide-react";
-import { useWallet } from "@solana/wallet-adapter-react";
+import { useConnection, useWallet } from "@solana/wallet-adapter-react";
+import { PublicKey } from "@solana/web3.js";
 import { toast } from "sonner";
 
 import { cn } from "@/lib/utils/cn";
@@ -57,6 +59,37 @@ type WalletProfile = { handle: string; displayName?: string } | null;
 function shortAddress(address: string) {
   if (address.length <= 12) return address;
   return `${address.slice(0, 4)}…${address.slice(-4)}`;
+}
+
+const USDC_MINT_MAINNET = "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v";
+const USDC_MINT_DEVNET = "4zMMC9srt5Ri5X14GAgXhaHii3GnPAEERYPJgZJDncDU";
+
+function getUsdcMintForEndpoint(endpoint: string): string {
+  return endpoint.toLowerCase().includes("devnet") ? USDC_MINT_DEVNET : USDC_MINT_MAINNET;
+}
+
+function formatUnits(
+  baseUnits: bigint,
+  decimals: number,
+  { maxFractionDigits }: { maxFractionDigits: number },
+) {
+  const negative = baseUnits < BigInt(0);
+  const abs = negative ? -baseUnits : baseUnits;
+
+  let s = abs.toString();
+  if (decimals <= 0) return `${negative ? "-" : ""}${s.replace(/\B(?=(\d{3})+(?!\d))/g, ",")}`;
+
+  if (s.length <= decimals) s = s.padStart(decimals + 1, "0");
+
+  const integer = s.slice(0, -decimals);
+  let fraction = s.slice(-decimals).replace(/0+$/, "");
+  if (fraction.length > maxFractionDigits) {
+    fraction = fraction.slice(0, maxFractionDigits).replace(/0+$/, "");
+  }
+
+  const formattedInteger = integer.replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+  const value = fraction ? `${formattedInteger}.${fraction}` : formattedInteger;
+  return `${negative ? "-" : ""}${value}`;
 }
 
 function isActivePath(pathname: string, href: string) {
@@ -135,6 +168,7 @@ async function serverSignOut() {
 export function UnifiedHeaderClient({ session }: { session: Session }) {
   const pathname = usePathname();
   const router = useRouter();
+  const { connection } = useConnection();
   const { publicKey, connected, disconnect, signMessage } = useWallet();
   const { setVisible } = useWalletModal();
 
@@ -143,6 +177,16 @@ export function UnifiedHeaderClient({ session }: { session: Session }) {
   const prevConnected = useRef<boolean>(false);
 
   const connectedAddress = useMemo(() => publicKey?.toBase58() ?? null, [publicKey]);
+
+  const [accountMenuOpen, setAccountMenuOpen] = useState(false);
+  const [balancesLoading, setBalancesLoading] = useState(false);
+  const [balancesError, setBalancesError] = useState(false);
+  const [balances, setBalances] = useState<{
+    solLamports: number;
+    usdcBaseUnits: bigint;
+  } | null>(null);
+  const balanceRequestRef = useRef(0);
+  const lastBalanceFetchRef = useRef<{ wallet: string; at: number } | null>(null);
 
   const [walletProfile, setWalletProfile] = useState<WalletProfile>(null);
   const [walletProfileLoading, setWalletProfileLoading] = useState(false);
@@ -316,6 +360,74 @@ export function UnifiedHeaderClient({ session }: { session: Session }) {
       signInRef.current = false;
     }
   }, [connectedAddress, router, signMessage, walletProfile?.handle]);
+
+  const refreshBalances = useCallback(
+    async ({ force }: { force?: boolean } = {}) => {
+      if (!publicKey) return;
+
+      const walletAddress = publicKey.toBase58();
+      const last = lastBalanceFetchRef.current;
+      if (!force && last && last.wallet === walletAddress && Date.now() - last.at < 20_000) return;
+
+      const requestId = ++balanceRequestRef.current;
+      lastBalanceFetchRef.current = { wallet: walletAddress, at: Date.now() };
+
+      setBalancesLoading(true);
+      setBalancesError(false);
+
+      try {
+        const usdcMint = new PublicKey(getUsdcMintForEndpoint(connection.rpcEndpoint));
+
+        const [solLamports, usdcAccounts] = await Promise.all([
+          connection.getBalance(publicKey, "confirmed"),
+          connection.getParsedTokenAccountsByOwner(publicKey, { mint: usdcMint }, "confirmed"),
+        ]);
+
+        let usdcBaseUnits = BigInt(0);
+        for (const item of usdcAccounts.value) {
+          const parsed = item.account.data.parsed as unknown;
+          const amount = (parsed as { info?: { tokenAmount?: { amount?: string } } })?.info
+            ?.tokenAmount?.amount;
+          if (typeof amount === "string") {
+            usdcBaseUnits += BigInt(amount);
+          }
+        }
+
+        if (balanceRequestRef.current !== requestId) return;
+        setBalances({ solLamports, usdcBaseUnits });
+      } catch {
+        if (balanceRequestRef.current !== requestId) return;
+        setBalances(null);
+        setBalancesError(true);
+      } finally {
+        if (balanceRequestRef.current !== requestId) return;
+        setBalancesLoading(false);
+      }
+    },
+    [connection, publicKey],
+  );
+
+  useEffect(() => {
+    if (!accountMenuOpen) return;
+    if (!publicKey) {
+      setBalances(null);
+      setBalancesError(false);
+      setBalancesLoading(false);
+      return;
+    }
+
+    void refreshBalances().catch(() => undefined);
+  }, [accountMenuOpen, publicKey, refreshBalances]);
+
+  const solBalanceText = useMemo(() => {
+    if (!balances) return "—";
+    return formatUnits(BigInt(balances.solLamports), 9, { maxFractionDigits: 4 });
+  }, [balances]);
+
+  const usdcBalanceText = useMemo(() => {
+    if (!balances) return "—";
+    return formatUnits(balances.usdcBaseUnits, 6, { maxFractionDigits: 2 });
+  }, [balances]);
 
   useEffect(() => {
     const wasConnected = prevConnected.current;
@@ -518,7 +630,7 @@ export function UnifiedHeaderClient({ session }: { session: Session }) {
           <ModeToggle />
 
           {session ? (
-            <DropdownMenu>
+            <DropdownMenu open={accountMenuOpen} onOpenChange={setAccountMenuOpen}>
               <DropdownMenuTrigger asChild>
                 <Button variant="outline" size="sm" className="gap-2">
                   <Avatar className="h-6 w-6">
@@ -562,17 +674,44 @@ export function UnifiedHeaderClient({ session }: { session: Session }) {
 
                 <DropdownMenuSeparator />
 
-                <DropdownMenuLabel className="text-xs text-muted-foreground">
-                  Wallet
-                </DropdownMenuLabel>
-                <div className="px-2 pb-2 text-xs text-muted-foreground">
-                  {connectedAddress ? (
-                    <div className="break-all font-mono" title={connectedAddress}>
-                      {shortAddress(connectedAddress)}
+                <div className="px-2 pb-2">
+                  <div className="flex items-center justify-between gap-2">
+                    <div className="text-xs font-semibold text-muted-foreground">Balances</div>
+                    {connectedAddress ? (
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        className="h-7 px-2"
+                        disabled={balancesLoading}
+                        onClick={() => void refreshBalances({ force: true })}
+                      >
+                        <RefreshCcw className="h-4 w-4" aria-hidden="true" />
+                        Refresh
+                      </Button>
+                    ) : null}
+                  </div>
+
+                  <div className="mt-2 grid grid-cols-2 gap-2">
+                    <div className="rounded-lg border bg-muted/20 p-2">
+                      <div className="text-[11px] text-muted-foreground">SOL</div>
+                      <div className="mt-1 text-sm font-semibold tabular-nums">{solBalanceText}</div>
                     </div>
-                  ) : (
-                    <div>Not connected</div>
-                  )}
+                    <div className="rounded-lg border bg-muted/20 p-2">
+                      <div className="text-[11px] text-muted-foreground">USDC</div>
+                      <div className="mt-1 text-sm font-semibold tabular-nums">{usdcBalanceText}</div>
+                    </div>
+                  </div>
+
+                  {!connectedAddress ? (
+                    <div className="mt-2 text-xs text-muted-foreground">
+                      Connect a wallet to load balances.
+                    </div>
+                  ) : balancesLoading ? (
+                    <div className="mt-2 text-xs text-muted-foreground">Updating…</div>
+                  ) : balancesError ? (
+                    <div className="mt-2 text-xs text-destructive">Couldn’t load balances.</div>
+                  ) : null}
                 </div>
 
                 <DropdownMenuItem className="cursor-pointer" onClick={() => setVisible(true)}>
@@ -586,7 +725,7 @@ export function UnifiedHeaderClient({ session }: { session: Session }) {
                   onClick={() => void runSignOut({ disconnectWallet: true })}
                 >
                   <LogOut className="h-4 w-4" aria-hidden="true" />
-                  {signingOut ? "Signing out…" : "Sign out (disconnect wallet)"}
+                  {signingOut ? "Signing out…" : "Sign out"}
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
