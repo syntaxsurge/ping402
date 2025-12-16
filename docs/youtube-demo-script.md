@@ -90,20 +90,21 @@ One-liner: A creator-paid inbox on Solana where x402 enforces pay-per-message de
       - Contact = syntaxsurge@example.com
       - Message = Hey Solana Builder — quick test: can you confirm you received this paid ping?
   13. Click **“Pay & send ping”** — wait for the checkout sheet to open.
-  14. **Verify on-screen:** Confirm a sheet appears titled **“Checkout Solana Pay”** showing the tier and amount.
+  14. **Verify on-screen:** Confirm the checkout dialog heading **“Checkout”** is visible and the status shows **“Waiting for payment…”**.
 - **Voiceover:**
   > “Now we do the real marketplace interaction: from Window A, we send a paid Priority ping to solana_builder and trigger Solana-native checkout.”
 
 ## 7. Complete Solana Pay Checkout and Get a Public Receipt
 - **URL:** /r/[messageId]
-- **Shot:** Wallet transaction approval followed by the Receipt page and a Solana Explorer transaction link.
+- **Shot:** Checkout dialog showing “Pay with connected wallet” and the QR option; wallet approval; then the Receipt page with a Solana Explorer transaction link.
 - **Steps:**
-  1. **Current page:** Window A `/ping/priority` — confirm the checkout UI is visible.
-  2. **Action:** Click **“Pay now”** — approve the transaction in the connected wallet.
-  3. **Verify on-screen:** Confirm the checkout status changes to **“Payment confirmed”**.
-  4. **Navigate:** Wait for redirect to `/r/[messageId]` — confirm the heading **“Receipt”** is visible.
-  5. **Action:** Click the payment transaction signature link — confirm it opens Solana Explorer in a new tab.
-  6. **Verify on-screen:** Confirm Solana Explorer displays the same transaction signature shown on the receipt.
+  1. **Current page:** Window A `/ping/priority` — confirm the checkout dialog heading **“Checkout”** is visible and the status shows **“Waiting for payment…”**.
+  2. **Action:** Click **“Pay with connected wallet”** — wait for the wallet transaction approval prompt to appear.
+  3. **Current page:** Wallet approval prompt — confirm the transaction approval screen is visible.
+  4. **Action:** Click **“Approve”** in your wallet — wait for the checkout status to update.
+  5. **Verify on-screen:** Confirm the checkout status changes from **“Waiting for payment…”** to a success state (e.g., **“Payment confirmed”**).
+  6. **Navigate:** Wait for redirect to `/r/[messageId]` — confirm the heading **“Receipt”** is visible.
+  7. **Verify on-screen:** Click the payment transaction signature link — confirm it opens Solana Explorer in a new tab and shows the same signature as the receipt.
 - **Voiceover:**
   > “Payment confirms quickly on Solana, and ping402 generates a public receipt immediately. The explorer link proves settlement happened on-chain.”
 
