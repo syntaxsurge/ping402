@@ -122,12 +122,3 @@ One-liner: A creator-paid inbox on Solana where x402 enforces pay-per-message de
   8. **Verify on-screen:** Confirm the status shows **Replied**.
 - **Voiceover:**
   > “On the creator side, the paid ping arrives in the inbox immediately. We open it, confirm the content, and mark it replied—this proves the full creator workflow.”
-
-## Final Wrap-Up
-- **URL:** /dashboard
-- **Shot:** Window B creator dashboard showing activity and the connected wallet in the header.
-- **Steps:**
-  1. **Current page:** Window B `/dashboard` — confirm the heading **“Dashboard”** is visible.
-  2. **Verify final state:** Confirm the dashboard and inbox are accessible for the claimed creator, and the flow is proven end-to-end: wallet identity → handle claim → paid ping via Solana Pay → receipt → inbox triage, with x402 enforcement backing the paid endpoint.
-- **Voiceover:**
-  > “We proved a real two-user flow: connect wallets, create a new creator handle, pay to send a ping with Solana Pay, verify the on-chain receipt, and manage the message in the creator inbox—while x402 enforces pay-per-action. Try it at https://pingx402.vercel.app/.”
