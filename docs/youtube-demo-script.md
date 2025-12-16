@@ -60,10 +60,10 @@ One-liner: A creator-paid inbox on Solana where x402 enforces pay-per-message de
 
 ## 5. Open the Second Creator’s Public Profile
 - **URL:** /u/solana_builder
-- **Shot:** Public profile for @solana_builder showing tier options (Standard, Priority, VIP) and a clear ‘send a paid ping’ UI.
+- **Shot:** Creator dashboard sidebar with navigation links; clicking “Public page” opens the public profile for @solana_builder with tier options (Standard, Priority, VIP).
 - **Steps:**
   1. **Current page:** Window B `/dashboard` — confirm **“Dashboard”** is visible.
-  2. **Navigate:** Open URL directly: https://pingx402.vercel.app/u/solana_builder → lands on `/u/solana_builder`.
+  2. **Navigate:** Click **“Public page”** in the dashboard sidebar navigation → lands on `/u/solana_builder`.
   3. **Current page:** `/u/solana_builder` — confirm the profile shows **“@solana_builder”**.
   4. **Verify on-screen:** Confirm tier options are visible (Standard / Priority / VIP).
 - **Voiceover:**
