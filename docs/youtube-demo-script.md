@@ -77,8 +77,8 @@ One-liner: A creator-paid inbox on Solana where x402 enforces pay-per-message de
   2. **Navigate:** Open URL directly: https://pingx402.vercel.app/ping/priority?to=solana_builder → lands on `/ping/priority`.
   3. **Current page:** `/ping/priority` — confirm the heading shows **“Priority ping ($0.05)”** and recipient is **solana_builder**.
   4. **Enter values:**
-     - Your name = Jamie
-     - Contact = jamie@example.com
+     - Your name = SyntaxSurge
+     - Contact = syntaxsurge@example.com
      - Message = Hey Solana Builder — quick test: can you confirm you received this paid ping?
   5. Click **“Pay & send ping”** — wait for the checkout sheet to open.
   6. **Verify on-screen:** Confirm a sheet appears titled **“Checkout Solana Pay”** showing the tier and amount.
